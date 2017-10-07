@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_id" translatable="false" type="id">555129802179</string>
+
+    <string name="achievement_100_clicks_id" translatable="false">CgkIw5vCgpQQEAIQAg</string>
+    <string name="achievement_1000_clicks_id" translatable="false">CgkIw5vCgpQQEAIQBw</string>
+    <string name="achievement_10k_clicks_id" translatable="false">CgkIw5vCgpQQEAIQCA</string>
+    <string name="achievement_100k_clicks_id" translatable="false">CgkIw5vCgpQQEAIQCQ</string>
+    <string name="achievement_1m_clicks_id" translatable="false">CgkIw5vCgpQQEAIQCg</string>
+
+    <string name="leaderboard_all_time" translatable="false">CgkIw5vCgpQQEAIQAw</string>
+</resources>

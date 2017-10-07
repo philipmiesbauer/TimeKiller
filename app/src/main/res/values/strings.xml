@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">Waste of Time</string>
+
+    <string name="reset">Reset Count</string>
+    <string name="start">START</string>
+
+    <string name="sign_in_other_error">There was an issue with sign-in, please try again later.</string>
+    <string name="signin_failure">Unable to sign in.</string>
+    <string name="sign_in">Sign In</string>
+    <string name="sign_out">Sign Out</string>
+    <string name="achievements">Achievements</string>
+    <string name="leaderboard">Leaderboard</string>
+    <string name="note_no_google_sign_in">You have to sign in to Google Play first</string>
+</resources>

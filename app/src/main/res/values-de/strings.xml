@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Waste of Time</string>
+    <string name="leaderboard">Bestenliste</string>
+    <string name="achievements">Ziele</string>
+    <string name="note_no_google_sign_in">Du must dich zuerst in Google Play anmelden</string>
+    <string name="reset">Zähler zurücksetzen</string>
+    <string name="sign_in">Anmelden</string>
+    <string name="sign_out">Ausloggen</string>
+    <string name="signin_failure">Kann mich nicht anmelden</string>
+    <string name="sign_in_other_error">Beim Anmelden ist ein Problem aufgetreten. Bitte versuche es später nochmal</string>
+    <string name="start">START</string>
+</resources>
