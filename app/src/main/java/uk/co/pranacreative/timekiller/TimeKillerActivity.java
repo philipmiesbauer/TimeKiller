@@ -11,6 +11,7 @@ import android.support.annotation.Nullable;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.Display;
 import android.view.GestureDetector;
 import android.view.Menu;
@@ -22,6 +23,10 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.ads.AdListener;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.games.Games;
@@ -37,11 +42,16 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
         GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener {
 
+    // Games API constants
     // Achievement IDs
     private static final int REQUEST_ACHIEVEMENTS = 123; // An arbitrary integer used as the request code
     // Leaderboard IDs
     private static final int REQUEST_LEADERBOARD = 124; // An arbitrary integer used as the request code
     private static final String COUNT_STR = "COUNT";
+
+    // AdMobs constants
+    private static final String ADMOBS_APP_ID = "ca-app-pub-6355028338567451~1344025701";
+
     private static final int[] MATERIAL_COLOURS_WHITE_TEXT = {0xFFF44336, 0xFFE91E63, 0xFF9C27B0,
             0xFF673AB7, 0xFF3F51B5, 0xFF009688, 0xFF795548, 0xFF795548, 0xFF607D8B};
     private static final int[] MATERIAL_COLOURS_BLACK_TEXT = {0xFF2196F3, 0xFF03A9F4, 0xFF00BCD4,
@@ -82,7 +92,7 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
     private boolean mSignInClicked = false;
     // Logic Variables
     private GestureDetectorCompat mDetector;
-    private int count;
+    private long count;
     private Toast debugToast;
     private TextView tvCount;
     private final Runnable mHidePart2Runnable = new Runnable() {
@@ -112,6 +122,10 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
         }
     };
 
+    private Toast toastNoGoogleSignIn;
+
+    private AdView mAdView;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -137,7 +151,15 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
         });
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        count = prefs.getInt(COUNT_STR, -1);
+
+        // Manage older versions where it used to be a int value instead of a long
+        try {
+            prefs.getLong(COUNT_STR, -1);
+        } catch (ClassCastException e) {
+            count = prefs.getInt(COUNT_STR, -1);
+            prefs.edit().putLong(COUNT_STR, count).apply();
+        }
+        count = prefs.getLong(COUNT_STR, -1);
 
         // Set value if a value greater than 0 exists
         if (count > 0) {
@@ -155,6 +177,29 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
                 .addApi(Games.API).addScope(Games.SCOPE_GAMES)
                 // add other APIs and scopes here as needed
                 .build();
+
+        // Initialise MobileAds for use
+        MobileAds.initialize(this, ADMOBS_APP_ID);
+
+        mAdView = (AdView) findViewById(R.id.adView);
+        AdRequest adRequest = new AdRequest.Builder().build();
+        mAdView.loadAd(adRequest);
+
+        mAdView.setAdListener(new AdListener() {
+            @Override
+            public void onAdLoaded() {
+                // Code to be executed when an ad finishes loading.
+                Log.i("Ads", "onAdLoaded");
+                mAdView.setVisibility(View.VISIBLE);
+            }
+
+            @Override
+            public void onAdFailedToLoad(int errorCode) {
+                // Code to be executed when an ad request fails.
+                Log.i("Ads", "onAdFailedToLoad");
+                mAdView.setVisibility(View.INVISIBLE);
+            }
+        });
 
     }
 
@@ -209,6 +254,9 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
                 return true;
             case R.id.menu_achievements:
                 if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
+                    // Update any potentially missed achievements
+                    checkAchievements();
+                    // Show achievements
                     startActivityForResult(Games.Achievements.getAchievementsIntent(mGoogleApiClient),
                             REQUEST_ACHIEVEMENTS);
                 } else {
@@ -233,8 +281,8 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
     private void countUp() {
         count++;
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        prefs.edit().putInt(COUNT_STR, count).commit();
-        checkAchievements();
+        prefs.edit().putLong(COUNT_STR, count).apply();
+        unlockAchievements();
     }
 
     private void relocateView(View view) {
@@ -244,8 +292,11 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
         int width = size.x;
         int height = size.y;
 
+        // Make sure number doesn#t land under an ad
+        height -= mAdView.getHeight();
+
         float x = (float) (Math.random() * (width - view.getWidth()));
-        float y = (float) (Math.random() * (height - view.getHeight()));
+        float y = (float) (/*Math.random() */ (height - view.getHeight()));
 
         view.setX(x);
         view.setY(y);
@@ -292,7 +343,11 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
     }
 
     private void notifyNoGoogleSignIn() {
-        Toast.makeText(this, R.string.note_no_google_sign_in, Toast.LENGTH_SHORT).show();
+        if (toastNoGoogleSignIn != null) {
+            toastNoGoogleSignIn.cancel();
+        }
+        toastNoGoogleSignIn = Toast.makeText(this, R.string.note_no_google_sign_in, Toast.LENGTH_SHORT);
+        toastNoGoogleSignIn.show();
     }
 
     @SuppressLint("InlinedApi")
@@ -339,31 +394,45 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
         signOut.setVisible(false);
     }
 
+    private void unlockAchievements() {
+        // Achievements from clicking
+
+        if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
+
+            if (count == 100) {
+                Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_100_clicks_id));
+            } else if (count == 1000) {
+                Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_1000_clicks_id));
+            } else if (count == 10000) {
+                Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_10k_clicks_id));
+            } else if (count == 100000) {
+                Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_100k_clicks_id));
+            } else if (count == 1000000) {
+                Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_1m_clicks_id));
+            }
+        }
+    }
+
     private void checkAchievements() {
         // Achievements from clicking
 
         if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
 
-            switch (count) {
-                case 100:
-                    Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_100_clicks_id));
-                    break;
-                case 1000:
-                    Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_1000_clicks_id));
-                    break;
-                case 10000:
-                    Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_10k_clicks_id));
-                    break;
-                case 100000:
-                    Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_100k_clicks_id));
-                    break;
-                case 1000000:
-                    Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_1m_clicks_id));
-                    break;
+            if (count >= 100) {
+                Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_100_clicks_id));
             }
-
-        } else {
-            notifyNoGoogleSignIn();
+            if (count >= 1000) {
+                Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_1000_clicks_id));
+            }
+            if (count >= 10000) {
+                Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_10k_clicks_id));
+            }
+            if (count >= 100000) {
+                Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_100k_clicks_id));
+            }
+            if (count >= 1000000) {
+                Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_1m_clicks_id));
+            }
         }
     }
 
