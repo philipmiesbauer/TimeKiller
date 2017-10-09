@@ -11,4 +11,5 @@
     <string name="achievements">Achievements</string>
     <string name="leaderboard">Leaderboard</string>
     <string name="note_no_google_sign_in">You have to sign in to Google Play first</string>
+    <string name="note_double_tap">Double Tap for more options</string>
 </resources>

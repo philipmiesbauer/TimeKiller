@@ -11,7 +11,6 @@ import android.support.annotation.Nullable;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.Display;
 import android.view.GestureDetector;
 import android.view.Menu;
@@ -23,7 +22,6 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.MobileAds;
@@ -47,7 +45,10 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
     private static final int REQUEST_ACHIEVEMENTS = 123; // An arbitrary integer used as the request code
     // Leaderboard IDs
     private static final int REQUEST_LEADERBOARD = 124; // An arbitrary integer used as the request code
+
+    //Preferences
     private static final String COUNT_STR = "COUNT";
+    private static final String DOUBLE_TAP_STR = "DOUBLE_TAP";
 
     // AdMobs constants
     private static final String ADMOBS_APP_ID = "ca-app-pub-6355028338567451~1344025701";
@@ -170,6 +171,12 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
         mDetector = new GestureDetectorCompat(this, this);
         mDetector.setOnDoubleTapListener(this);
 
+        // DoubleTap instructions
+        if (!prefs.getBoolean(DOUBLE_TAP_STR, false)) {
+            Toast.makeText(this, R.string.note_double_tap, Toast.LENGTH_LONG).show();
+            prefs.edit().putBoolean(DOUBLE_TAP_STR, true).apply();
+        }
+
         // Create the Google Api Client with access to the Play Games services
         mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .addConnectionCallbacks(this)
@@ -184,22 +191,6 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
         mAdView = (AdView) findViewById(R.id.adView);
         AdRequest adRequest = new AdRequest.Builder().build();
         mAdView.loadAd(adRequest);
-
-        mAdView.setAdListener(new AdListener() {
-            @Override
-            public void onAdLoaded() {
-                // Code to be executed when an ad finishes loading.
-                Log.i("Ads", "onAdLoaded");
-                mAdView.setVisibility(View.VISIBLE);
-            }
-
-            @Override
-            public void onAdFailedToLoad(int errorCode) {
-                // Code to be executed when an ad request fails.
-                Log.i("Ads", "onAdFailedToLoad");
-                mAdView.setVisibility(View.INVISIBLE);
-            }
-        });
 
     }
 

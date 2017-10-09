@@ -10,4 +10,5 @@
     <string name="signin_failure">Kann mich nicht anmelden</string>
     <string name="sign_in_other_error">Beim Anmelden ist ein Problem aufgetreten. Bitte versuche es später nochmal</string>
     <string name="start">START</string>
+    <string name="note_double_tap">Doppel Klick für mehr Optionen</string>
 </resources>
