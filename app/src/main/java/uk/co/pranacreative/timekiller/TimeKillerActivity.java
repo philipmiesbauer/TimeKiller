@@ -203,6 +203,8 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
         AdRequest adRequest = new AdRequest.Builder().build();
         mAdView.loadAd(adRequest);
 
+        Toast.makeText(context, "done", Toast.LENGTH_SHORT).show();
+
     }
 
     @Override
