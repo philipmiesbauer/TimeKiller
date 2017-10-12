@@ -1,6 +1,7 @@
 package uk.co.pranacreative.timekiller;
 
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Point;
@@ -8,6 +9,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
+import android.support.design.widget.Snackbar;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
@@ -113,6 +115,7 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
                     | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
         }
     };
+    private Context context;
     private RelativeLayout rlActivity;
     private Menu menuTimerKiller;
     private boolean mVisible;
@@ -132,6 +135,8 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_time_killer);
+
+        context = this;
 
         mVisible = true;
         tvCount = (TextView) findViewById(R.id.tv_count);
@@ -173,8 +178,14 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
 
         // DoubleTap instructions
         if (!prefs.getBoolean(DOUBLE_TAP_STR, false)) {
-            Toast.makeText(this, R.string.note_double_tap, Toast.LENGTH_LONG).show();
-            prefs.edit().putBoolean(DOUBLE_TAP_STR, true).apply();
+            Snackbar.make(tvCount, R.string.note_double_tap, Snackbar.LENGTH_LONG)
+                    .setAction(R.string.note_got_it, new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+                            prefs.edit().putBoolean(DOUBLE_TAP_STR, true).apply();
+                        }
+                    }).show();
         }
 
         // Create the Google Api Client with access to the Play Games services
@@ -287,7 +298,7 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
         height -= mAdView.getHeight();
 
         float x = (float) (Math.random() * (width - view.getWidth()));
-        float y = (float) (/*Math.random() */ (height - view.getHeight()));
+        float y = (float) (Math.random() * (height - view.getHeight()));
 
         view.setX(x);
         view.setY(y);
