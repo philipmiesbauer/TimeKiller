@@ -10,7 +10,7 @@
     <string name="achievement_1m_clicks_id" translatable="false">CgkIw5vCgpQQEAIQCg</string>
     <string name="achievement_enjoy_view_id" translatable="false">CgkIw5vCgpQQEAIQDA</string>
 
-    <string name="inapp_remove_ads_id" translatable="false">removeAds</string>
+    <string name="inapp_remove_ads_id" translatable="false">remove_ads</string>
 
     <string name="leaderboard_all_time" translatable="false">CgkIw5vCgpQQEAIQAw</string>
 </resources>

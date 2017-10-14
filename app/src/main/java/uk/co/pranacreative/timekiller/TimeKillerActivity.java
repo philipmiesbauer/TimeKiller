@@ -372,9 +372,10 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
     private void resetCurrentNumberTimer() {
         if (currentNumberTimer != null) {
             currentNumberTimer.cancel();
-        } else {
-            currentNumberTimer = new Timer();
         }
+
+        currentNumberTimer = new Timer();
+
         currentNumberTimer.schedule(new TimerTask() {
             @Override
             public void run() {
