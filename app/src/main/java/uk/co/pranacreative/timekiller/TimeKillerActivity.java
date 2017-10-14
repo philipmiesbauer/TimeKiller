@@ -32,6 +32,9 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.games.Games;
 import com.google.example.games.basegameutils.BaseGameUtils;
 
+import java.util.Timer;
+import java.util.TimerTask;
+
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
@@ -126,6 +129,9 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
         }
     };
 
+    // Timer for checking how long to stay on the a number
+    private Timer currentNumberTimer;
+
     private Toast toastNoGoogleSignIn;
 
     private AdView mAdView;
@@ -151,6 +157,7 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
                 countUp();
                 relocateView(view);
                 changeBackgroundColour();
+                resetCurrentNumberTimer();
 
                 tvCount.setText(String.valueOf(count));
             }
@@ -202,8 +209,6 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
         mAdView = (AdView) findViewById(R.id.adView);
         AdRequest adRequest = new AdRequest.Builder().build();
         mAdView.loadAd(adRequest);
-
-        Toast.makeText(context, "done", Toast.LENGTH_SHORT).show();
 
     }
 
@@ -286,7 +291,7 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
         count++;
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         prefs.edit().putLong(COUNT_STR, count).apply();
-        unlockAchievements();
+        unlockCountAchievements();
     }
 
     private void relocateView(View view) {
@@ -323,6 +328,20 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
         tvCount.setTextColor(textColour);
         int index = (int) Math.round(Math.random() * (backgroundColours.length - 1));
         rlActivity.setBackgroundColor(backgroundColours[index]);
+    }
+
+    private void resetCurrentNumberTimer() {
+        if (currentNumberTimer != null) {
+            currentNumberTimer.cancel();
+        }
+        currentNumberTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
+                    Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_enjoy_view_id));
+                }
+            }
+        }, 5 * 60 * 1000); // 5 minutes delay
     }
 
     private void toggle() {
@@ -398,7 +417,7 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
         signOut.setVisible(false);
     }
 
-    private void unlockAchievements() {
+    private void unlockCountAchievements() {
         // Achievements from clicking
 
         if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
