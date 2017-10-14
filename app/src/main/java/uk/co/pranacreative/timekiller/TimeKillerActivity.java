@@ -244,6 +244,16 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
     }
 
     @Override
+    protected void onPause() {
+
+        if (currentNumberTimer != null) {
+            currentNumberTimer.cancel();
+        }
+
+        super.onPause();
+    }
+
+    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflator = getMenuInflater();
         inflator.inflate(R.menu.timer_killer, menu);
