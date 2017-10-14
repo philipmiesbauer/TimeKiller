@@ -12,6 +12,12 @@
         android:visible="true"
         app:showAsAction="never" />
     <item
+        android:id="@+id/menu_remove_ads"
+        android:icon="@drawable/ic_do_not_disturb_black_24dp"
+        android:title="@string/remove_ads"
+        android:visible="true"
+        app:showAsAction="never" />
+    <item
         android:id="@+id/menu_sign_in"
         android:title="@string/sign_in"
         app:showAsAction="never" />

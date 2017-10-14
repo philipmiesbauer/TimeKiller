@@ -13,4 +13,11 @@
     <string name="note_no_google_sign_in">You have to sign in to Google Play first</string>
     <string name="note_double_tap">Double Tap for more options</string>
     <string name="note_got_it">Got it</string>
+    <string name="remove_ads">Remove Ads</string>
+    <string name="no_network">No network connection. Try again Later</string>
+    <string name="report_issue">Report Issue</string>
+    <string name="note_sorry_bug">Oops, this is a bug. Sorry!</string>
+    <string name="error_report_subject_billing" translatable="false">Google Billing Error</string>
+    <string name="error_report_body_billing" translatable="false">Google Billing through up and Error</string>
+    <string name="note_purchase_successful">Purchase Successful. Congratulations!</string>
 </resources>

@@ -12,4 +12,9 @@
     <string name="start">START</string>
     <string name="note_double_tap">Doppel Klick für mehr Optionen</string>
     <string name="note_got_it">Verstanden</string>
+    <string name="no_network">Keine Netzwerkverbindung. Versuche es später noch einmal.</string>
+    <string name="note_purchase_successful">Kauf erfolgreich. Gratulation!</string>
+    <string name="note_sorry_bug">Ups, da ist ein Fehler. Tut mir leid!</string>
+    <string name="remove_ads">Werbung entfernen</string>
+    <string name="report_issue">Problem melden</string>
 </resources>
