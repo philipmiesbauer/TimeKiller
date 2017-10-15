@@ -249,6 +249,8 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
     protected void onResume() {
         super.onResume();
         resetCurrentNumberTimer();
+
+        //TODO - Check if remove ads have been purchased
     }
 
     @Override
