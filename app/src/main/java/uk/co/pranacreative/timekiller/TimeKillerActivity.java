@@ -724,7 +724,10 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
                     prefs.edit().putBoolean(getString(R.string.inapp_remove_ads_id), true).apply();
                     // Hide Ads
                     MenuItem removeAds = menuTimerKiller.findItem(R.id.menu_remove_ads);
-                    removeAds.setVisible(false);
+
+                    if (removeAds != null) {
+                        removeAds.setVisible(false);
+                    }
                 }
             }
         } else if (responseCode == BillingClient.BillingResponse.USER_CANCELED) {
@@ -772,7 +775,10 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
                                 prefs.edit().putBoolean(getString(R.string.inapp_remove_ads_id), true).apply();
                                 // Hide Ads
                                 MenuItem removeAds = menuTimerKiller.findItem(R.id.menu_remove_ads);
-                                removeAds.setVisible(false);
+
+                                if (removeAds != null) {
+                                    removeAds.setVisible(false);
+                                }
                             }
                         }
                     }
