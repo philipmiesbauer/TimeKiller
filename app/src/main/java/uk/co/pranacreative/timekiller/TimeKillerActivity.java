@@ -240,7 +240,10 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
         }
 
         // Connect to Google Play Billing
-        bindService(new Intent("com.android.vending.billing.InAppBillingService.BIND"), mServiceConn, Context.BIND_AUTO_CREATE);
+        Intent serviceIntent =
+                new Intent("com.android.vending.billing.InAppBillingService.BIND");
+        serviceIntent.setPackage("com.android.vending");
+        bindService(serviceIntent, mServiceConn, Context.BIND_AUTO_CREATE);
         mBillingClient = BillingClient.newBuilder(this).setListener(this).build();
     }
 
@@ -267,8 +270,7 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
     protected void onResume() {
         super.onResume();
         resetCurrentNumberTimer();
-
-        //TODO - Check if remove ads have been purchased
+        checkOwnedItems();
     }
 
     @Override
@@ -750,23 +752,30 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
 
     private void checkOwnedItems() {
         try {
-            Bundle ownedItems = mService.getPurchases(3, getPackageName(), "inapp", null);
+            Bundle ownedItems = null;
+            if (mService != null) {
+                ownedItems = mService.getPurchases(3, getPackageName(), "inapp", null);
 
-            if (ownedItems.getInt("RESPONSE_CODE") == 0) {
-                ArrayList<String> ownedSkus = ownedItems.getStringArrayList("INAPP_PURCHASE_ITEM_LIST");
+                if (ownedItems.getInt("RESPONSE_CODE") == 0) {
+                    ArrayList<String> ownedSkus = ownedItems.getStringArrayList("INAPP_PURCHASE_ITEM_LIST");
 
-                if (ownedSkus != null && ownedSkus.size() > 0) {
-                    for (String sku : ownedSkus) {
-                        if (sku.equals(getString(R.string.inapp_remove_ads_id))) {
-                            // Remove ads
-                            if (mAdView != null) {
-                                mAdView.setVisibility(View.INVISIBLE);
+                    if (ownedSkus != null && ownedSkus.size() > 0) {
+                        for (String sku : ownedSkus) {
+                            if (sku.equals(getString(R.string.inapp_remove_ads_id))) {
+                                // Remove ads
+                                if (mAdView != null) {
+                                    mAdView.setVisibility(View.INVISIBLE);
+                                }
+                                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+                                prefs.edit().putBoolean(getString(R.string.inapp_remove_ads_id), true).apply();
+                                invalidateOptionsMenu();
                             }
-                            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-                            prefs.edit().putBoolean(getString(R.string.inapp_remove_ads_id), true).apply();
-                            invalidateOptionsMenu();
                         }
                     }
+                }
+            } else {
+                if (ownedItems != null) {
+                    Log.e(TAG, "ERROR - checkOwnedItems: RESPONSE CODE = " + ownedItems.getInt("RESPONSE_CODE"));
                 }
             }
         } catch (RemoteException e) {
