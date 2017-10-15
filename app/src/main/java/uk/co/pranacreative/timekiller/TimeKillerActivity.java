@@ -414,7 +414,7 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
             public void run() {
                 unlockEnjoyAchievement();
             }
-        }, 5 * 60 * 1000); // 5 minutes delay
+        }, 60 * 1000); // 1 minutes delay
     }
 
     private void removeAds() {
@@ -722,7 +722,9 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
                     }
                     SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
                     prefs.edit().putBoolean(getString(R.string.inapp_remove_ads_id), true).apply();
-                    invalidateOptionsMenu();
+                    // Hide Ads
+                    MenuItem removeAds = menuTimerKiller.findItem(R.id.menu_remove_ads);
+                    removeAds.setVisible(false);
                 }
             }
         } else if (responseCode == BillingClient.BillingResponse.USER_CANCELED) {
@@ -768,7 +770,9 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
                                 }
                                 SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
                                 prefs.edit().putBoolean(getString(R.string.inapp_remove_ads_id), true).apply();
-                                invalidateOptionsMenu();
+                                // Hide Ads
+                                MenuItem removeAds = menuTimerKiller.findItem(R.id.menu_remove_ads);
+                                removeAds.setVisible(false);
                             }
                         }
                     }
