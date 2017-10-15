@@ -2,13 +2,17 @@ package uk.co.pranacreative.timekiller;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.graphics.Point;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
+import android.os.RemoteException;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
@@ -32,6 +36,7 @@ import com.android.billingclient.api.BillingClientStateListener;
 import com.android.billingclient.api.BillingFlowParams;
 import com.android.billingclient.api.Purchase;
 import com.android.billingclient.api.PurchasesUpdatedListener;
+import com.android.vending.billing.IInAppBillingService;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.MobileAds;
@@ -40,6 +45,7 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.games.Games;
 import com.google.example.games.basegameutils.BaseGameUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -95,6 +101,7 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
         }
     };
     // In-app Billing
+    IInAppBillingService mService;
     private BillingClient mBillingClient;
     private boolean mIsServiceConnected;
     private int mBillingClientResponseCode;
@@ -135,14 +142,24 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
             hide();
         }
     };
-
     // Timer for checking how long to stay on the a number
     private Timer currentNumberTimer;
-
     private Toast toastNoGoogleSignIn;
     private Activity activity;
-
     private AdView mAdView;
+    ServiceConnection mServiceConn = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            mService = IInAppBillingService.Stub.asInterface(service);
+            Log.d("TEST", "mService ready to go!");
+            checkOwnedItems();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            mService = null;
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -223,6 +240,7 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
         }
 
         // Connect to Google Play Billing
+        bindService(new Intent("com.android.vending.billing.InAppBillingService.BIND"), mServiceConn, Context.BIND_AUTO_CREATE);
         mBillingClient = BillingClient.newBuilder(this).setListener(this).build();
     }
 
@@ -271,6 +289,14 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
             mGoogleApiClient.disconnect();
         } else {
             notifyNoGoogleSignIn();
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if (mServiceConn != null) {
+            unbindService(mServiceConn);
         }
     }
 
@@ -324,6 +350,7 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
                 return true;
             case R.id.menu_remove_ads:
                 removeAds();
+                return true;
         }
         return false;
     }
@@ -342,7 +369,7 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
         int width = size.x;
         int height = size.y;
 
-        // Make sure number doesn#t land under an ad
+        // Make sure number doesn't land under an ad
         if (mAdView != null) {
             height -= mAdView.getHeight();
         }
@@ -718,6 +745,32 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
                             startActivity(Intent.createChooser(intent, "Send Email"));
                         }
                     }).show();
+        }
+    }
+
+    private void checkOwnedItems() {
+        try {
+            Bundle ownedItems = mService.getPurchases(3, getPackageName(), "inapp", null);
+
+            if (ownedItems.getInt("RESPONSE_CODE") == 0) {
+                ArrayList<String> ownedSkus = ownedItems.getStringArrayList("INAPP_PURCHASE_ITEM_LIST");
+
+                if (ownedSkus != null && ownedSkus.size() > 0) {
+                    for (String sku : ownedSkus) {
+                        if (sku.equals(getString(R.string.inapp_remove_ads_id))) {
+                            // Remove ads
+                            if (mAdView != null) {
+                                mAdView.setVisibility(View.INVISIBLE);
+                            }
+                            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+                            prefs.edit().putBoolean(getString(R.string.inapp_remove_ads_id), true).apply();
+                            invalidateOptionsMenu();
+                        }
+                    }
+                }
+            }
+        } catch (RemoteException e) {
+            e.printStackTrace();
         }
     }
 }
