@@ -343,7 +343,9 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
         int height = size.y;
 
         // Make sure number doesn#t land under an ad
-        height -= mAdView.getHeight();
+        if (mAdView != null) {
+            height -= mAdView.getHeight();
+        }
 
         float x = (float) (Math.random() * (width - view.getWidth()));
         float y = (float) (Math.random() * (height - view.getHeight()));
@@ -686,7 +688,9 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
                 && purchases != null) {
             for (Purchase purchase : purchases) {
                 if (purchase.getSku().equals(getString(R.string.inapp_remove_ads_id))) {
-                    mAdView.setVisibility(View.INVISIBLE);
+                    if (mAdView != null) {
+                        mAdView.setVisibility(View.INVISIBLE);
+                    }
                     SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
                     prefs.edit().putBoolean(getString(R.string.inapp_remove_ads_id), true).apply();
                     invalidateOptionsMenu();
