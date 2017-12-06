@@ -171,8 +171,8 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
         activity = this;
 
         mVisible = true;
-        tvCount = (TextView) findViewById(R.id.tv_count);
-        rlActivity = (RelativeLayout) findViewById(R.id.rl_activity);
+        tvCount = findViewById(R.id.tv_count);
+        rlActivity = findViewById(R.id.rl_activity);
 
 
         // Set up the user interaction to manually show or hide the system UI.
@@ -234,7 +234,7 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
             // Initialise MobileAds for use
             MobileAds.initialize(this, ADMOBS_APP_ID);
 
-            mAdView = (AdView) findViewById(R.id.adView);
+            mAdView = findViewById(R.id.adView);
             AdRequest adRequest = new AdRequest.Builder().build();
             mAdView.loadAd(adRequest);
         }
@@ -774,7 +774,10 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
                                 SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
                                 prefs.edit().putBoolean(getString(R.string.inapp_remove_ads_id), true).apply();
                                 // Hide Ads
-                                MenuItem removeAds = menuTimerKiller.findItem(R.id.menu_remove_ads);
+                                MenuItem removeAds = null;
+                                if (menuTimerKiller != null) {
+                                    removeAds = menuTimerKiller.findItem(R.id.menu_remove_ads);
+                                }
 
                                 if (removeAds != null) {
                                     removeAds.setVisible(false);
