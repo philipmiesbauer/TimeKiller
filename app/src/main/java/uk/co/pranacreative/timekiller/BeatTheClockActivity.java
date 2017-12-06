@@ -55,13 +55,13 @@ import java.util.TimerTask;
  * An example full-screen activity that shows and hides the system UI (i.e.
  * status bar and navigation/system bar) with user interaction.
  */
-public class TimeKillerActivity extends AppCompatActivity implements GestureDetector.OnGestureListener,
+public class BeatTheClockActivity extends AppCompatActivity implements GestureDetector.OnGestureListener,
         GestureDetector.OnDoubleTapListener,
         GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener,
         PurchasesUpdatedListener {
 
-    private static final String TAG = TimeKillerActivity.class.getSimpleName();
+    private static final String TAG = BeatTheClockActivity.class.getSimpleName();
 
     // Games API constants
     // Achievement IDs
@@ -71,7 +71,6 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
 
     //Preferences
     private static final String COUNT_STR = "COUNT";
-    private static final String DOUBLE_TAP_STR = "DOUBLE_TAP";
 
     // AdMobs constants
     private static final String ADMOBS_APP_ID = "ca-app-pub-6355028338567451~1344025701";
@@ -161,11 +160,23 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
         }
     };
 
+
+    // TODO (1) - Make separate leader board for timed in play console
+    // TODO (2) - Update correct leader board score
+    // TODO (3) - New achievements for timed mode
+    // TODO (4) - Count down time
+    // TODO (5) - Reset count on time finish
+    // TODO (6) - Add time when clicking number
+    // TODO (7) - Make animation for adding time
+    // TODO (8) - Make animation for moving number
+    // TODO (9) - Avoid top area where the chronometer is when repositioning the numbers
+    // TODO (10) - Always start with START instead of previous score
+    
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        setContentView(R.layout.activity_time_killer);
+        setContentView(R.layout.activity_beat_the_clock);
 
         context = this;
         activity = this;
@@ -208,18 +219,6 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
 
         mDetector = new GestureDetectorCompat(this, this);
         mDetector.setOnDoubleTapListener(this);
-
-        // DoubleTap instructions
-        if (!prefs.getBoolean(DOUBLE_TAP_STR, false)) {
-            Snackbar.make(tvCount, R.string.note_double_tap, Snackbar.LENGTH_LONG)
-                    .setAction(R.string.note_got_it, new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-                            prefs.edit().putBoolean(DOUBLE_TAP_STR, true).apply();
-                        }
-                    }).show();
-        }
 
         // Create the Google Api Client with access to the Play Games services
         mGoogleApiClient = new GoogleApiClient.Builder(this)
@@ -315,12 +314,11 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
             MenuItem removeAds = menu.findItem(R.id.menu_remove_ads);
             removeAds.setVisible(false);
         }
-
         MenuItem classic = menu.findItem(R.id.menu_modes_classic);
         MenuItem timed = menu.findItem(R.id.menu_modes_beat_the_clock);
 
-        classic.setVisible(false);
-        timed.setVisible(true);
+        classic.setVisible(true);
+        timed.setVisible(false);
 
         return true;
     }

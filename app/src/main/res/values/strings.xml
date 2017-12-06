@@ -20,4 +20,6 @@
     <string name="error_report_subject_billing" translatable="false">Google Billing Error</string>
     <string name="error_report_body_billing" translatable="false">Google Billing through up and Error</string>
     <string name="note_purchase_successful">Purchase Successful. Congratulations!</string>
+    <string name="classic">Classic</string>
+    <string name="beat_the_clock">Timed</string>
 </resources>
