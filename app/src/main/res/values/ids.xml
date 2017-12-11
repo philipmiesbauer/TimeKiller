@@ -9,8 +9,12 @@
     <string name="achievement_100k_clicks_id" translatable="false">CgkIw5vCgpQQEAIQCQ</string>
     <string name="achievement_1m_clicks_id" translatable="false">CgkIw5vCgpQQEAIQCg</string>
     <string name="achievement_enjoy_view_id" translatable="false">CgkIw5vCgpQQEAIQDA</string>
+    <string name="achievement_ftt_100_clicks_id" translatable="false">CgkIw5vCgpQQEAIQDg</string>
+    <string name="achievement_ftt_1000_clicks_id" translatable="false">CgkIw5vCgpQQEAIQDw</string>
+    <string name="achievement_ftt_10k_clicks_id" translatable="false">CgkIw5vCgpQQEAIQEA</string>
 
     <string name="inapp_remove_ads_id" translatable="false">remove_ads</string>
 
     <string name="leaderboard_all_time" translatable="false">CgkIw5vCgpQQEAIQAw</string>
+    <string name="leaderboard_beat_the_clock" translatable="false">CgkIw5vCgpQQEAIQDQ</string>
 </resources>

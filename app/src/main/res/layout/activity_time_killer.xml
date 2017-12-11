@@ -4,6 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#0099cc"
+    android:animateLayoutChanges="true"
     tools:context="uk.co.pranacreative.timekiller.TimeKillerActivity">
 
     <!-- The primary full-screen view. This can be replaced with whatever view

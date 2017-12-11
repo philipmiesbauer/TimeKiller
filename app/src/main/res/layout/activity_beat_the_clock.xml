@@ -4,6 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#0099cc"
+    android:animateLayoutChanges="true"
     tools:context="uk.co.pranacreative.timekiller.BeatTheClockActivity">
 
     <!-- The primary full-screen view. This can be replaced with whatever view
@@ -31,12 +32,16 @@
         ads:adSize="BANNER"
         ads:adUnitId="ca-app-pub-6355028338567451/8213165312" />
 
-    <Chronometer
-        android:id="@+id/chrono_time_left"
+    <TextView
+        android:id="@+id/tv_time_left"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
-        android:textSize="30sp" />
+        android:padding="5dp"
+        android:textSize="30sp"
+        android:textColor="#000000"
+        android:background="@drawable/rounded_corners"
+        android:text="@string/secs_5" />
 
 </RelativeLayout>

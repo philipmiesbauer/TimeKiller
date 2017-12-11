@@ -22,4 +22,5 @@
     <string name="note_purchase_successful">Purchase Successful. Congratulations!</string>
     <string name="classic">Classic</string>
     <string name="beat_the_clock">Timed</string>
+    <string name="secs_5">05</string>
 </resources>

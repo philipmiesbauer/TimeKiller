@@ -50,6 +50,8 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import uk.co.pranacreative.timekiller.utils.ExtendableCountDownTimer;
+
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
@@ -111,9 +113,15 @@ public class BeatTheClockActivity extends AppCompatActivity implements GestureDe
     private boolean mSignInClicked = false;
     // Logic Variables
     private GestureDetectorCompat mDetector;
-    private long count;
+    private long count_all_time;
+    private long count_beat_the_clock;
     private Toast debugToast;
     private TextView tvCount;
+    private TextView tvTimeLeft;
+    private final static long START_TIME_LEFT = 5000;
+    private final static long START_MILLIS_TO_ADD = 500;
+    private ExtendableCountDownTimer timerTimeLeft;
+
     private final Runnable mHidePart2Runnable = new Runnable() {
         @SuppressLint("InlinedApi")
         @Override
@@ -146,6 +154,7 @@ public class BeatTheClockActivity extends AppCompatActivity implements GestureDe
     private Toast toastNoGoogleSignIn;
     private Activity activity;
     private AdView mAdView;
+
     ServiceConnection mServiceConn = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
@@ -160,18 +169,6 @@ public class BeatTheClockActivity extends AppCompatActivity implements GestureDe
         }
     };
 
-
-    // TODO (1) - Make separate leader board for timed in play console
-    // TODO (2) - Update correct leader board score
-    // TODO (3) - New achievements for timed mode
-    // TODO (4) - Count down time
-    // TODO (5) - Reset count on time finish
-    // TODO (6) - Add time when clicking number
-    // TODO (7) - Make animation for adding time
-    // TODO (8) - Make animation for moving number
-    // TODO (9) - Avoid top area where the chronometer is when repositioning the numbers
-    // TODO (10) - Always start with START instead of previous score
-    
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -184,6 +181,7 @@ public class BeatTheClockActivity extends AppCompatActivity implements GestureDe
         mVisible = true;
         tvCount = findViewById(R.id.tv_count);
         rlActivity = findViewById(R.id.rl_activity);
+        tvTimeLeft = findViewById(R.id.tv_time_left);
 
 
         // Set up the user interaction to manually show or hide the system UI.
@@ -191,12 +189,13 @@ public class BeatTheClockActivity extends AppCompatActivity implements GestureDe
             @Override
             public void onClick(View view) {
                 hide();
+                addTime();
                 countUp();
                 relocateView(view);
                 changeBackgroundColour();
                 resetCurrentNumberTimer();
 
-                tvCount.setText(String.valueOf(count));
+                tvCount.setText(String.valueOf(count_all_time));
             }
         });
 
@@ -206,16 +205,12 @@ public class BeatTheClockActivity extends AppCompatActivity implements GestureDe
         try {
             prefs.getLong(COUNT_STR, -1);
         } catch (ClassCastException e) {
-            count = prefs.getInt(COUNT_STR, -1);
-            prefs.edit().putLong(COUNT_STR, count).apply();
+            count_all_time = prefs.getInt(COUNT_STR, -1);
+            prefs.edit().putLong(COUNT_STR, count_all_time).apply();
         }
-        count = prefs.getLong(COUNT_STR, -1);
+        count_all_time = prefs.getLong(COUNT_STR, -1);
 
-        // Set value if a value greater than 0 exists
-        if (count > 0) {
-            tvCount.setText(String.valueOf(count));
-        }
-
+        resetScene();
 
         mDetector = new GestureDetectorCompat(this, this);
         mDetector.setOnDoubleTapListener(this);
@@ -286,7 +281,8 @@ public class BeatTheClockActivity extends AppCompatActivity implements GestureDe
         super.onStop();
 
         if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
-            Games.Leaderboards.submitScore(mGoogleApiClient, getString(R.string.leaderboard_all_time), count);
+            Games.Leaderboards.submitScore(mGoogleApiClient, getString(R.string.leaderboard_all_time), count_all_time);
+            Games.Leaderboards.submitScore(mGoogleApiClient, getString(R.string.leaderboard_beat_the_clock), count_beat_the_clock);
             mGoogleApiClient.disconnect();
         } else {
             notifyNoGoogleSignIn();
@@ -347,10 +343,11 @@ public class BeatTheClockActivity extends AppCompatActivity implements GestureDe
             case R.id.menu_leaderboard:
 
                 if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
-                    // Submit scores before checking the leasderboard
-                    Games.Leaderboards.submitScore(mGoogleApiClient, getString(R.string.leaderboard_all_time), count);
+                    // Submit scores before checking the leaderboard
+                    Games.Leaderboards.submitScore(mGoogleApiClient, getString(R.string.leaderboard_all_time), count_all_time);
+                    Games.Leaderboards.submitScore(mGoogleApiClient, getString(R.string.leaderboard_beat_the_clock), count_beat_the_clock);
                     startActivityForResult(Games.Leaderboards.getLeaderboardIntent(mGoogleApiClient,
-                            getString(R.string.leaderboard_all_time)), REQUEST_LEADERBOARD);
+                            getString(R.string.leaderboard_beat_the_clock)), REQUEST_LEADERBOARD);
                 } else {
                     notifyNoGoogleSignIn();
                 }
@@ -362,10 +359,74 @@ public class BeatTheClockActivity extends AppCompatActivity implements GestureDe
         return false;
     }
 
+    private void resetScene() {
+
+        if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
+            // Submit scores before resetting
+            Games.Leaderboards.submitScore(mGoogleApiClient, getString(R.string.leaderboard_all_time), count_all_time);
+            Games.Leaderboards.submitScore(mGoogleApiClient, getString(R.string.leaderboard_beat_the_clock), count_beat_the_clock);
+        }
+        // Unlock achievements before resetting
+        unlockCountAchievements();
+
+        // Reset Beat the Clock count to 0
+        count_beat_the_clock = 0;
+
+        // Reset Text
+        tvCount.setText(R.string.start);
+
+        // Recenter TextView in the middle of layout
+        RelativeLayout.LayoutParams lp = (RelativeLayout.LayoutParams) tvCount.getLayoutParams();
+        lp.addRule(RelativeLayout.CENTER_IN_PARENT);
+        tvCount.setLayoutParams(lp);
+
+        /*  Set up timer to run for default time and update every 239ms
+            239 ms will make sure the millis second units change every time, making it look like
+            it is constantly updating.*/
+        timerTimeLeft = new ExtendableCountDownTimer(START_TIME_LEFT, 239) {
+            @Override
+            public void onTimerTick(long l) {
+                updateTimeLeftView(l);
+            }
+
+            @Override
+            public void onTimerFinish() {
+                resetScene();
+            }
+        };
+
+    }
+
+    @SuppressLint("DefaultLocale")
+    private void updateTimeLeftView(long millisLeft) {
+        long millis;
+        long secs;
+        long mins;
+
+        secs = millisLeft / 1000;
+        millis = millisLeft % 1000;
+
+        if (secs >= 60) {
+            // At least 1 minute left
+            mins = secs / 60;
+            secs = secs % 60;
+            tvCount.setText(String.format("%02d:%02d.%03d", mins, secs, millis));
+        } else {
+            // Less than 1 minutes left
+            tvCount.setText(String.format("%02d.%03d", secs, millis));
+        }
+    }
+
+    private void addTime() {
+        // ALways change same amount of time
+        timerTimeLeft.addMillis(START_MILLIS_TO_ADD);
+    }
+
     private void countUp() {
-        count++;
+        count_all_time++;
+        count_beat_the_clock++;
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        prefs.edit().putLong(COUNT_STR, count).apply();
+        prefs.edit().putLong(COUNT_STR, count_all_time).apply();
         unlockCountAchievements();
     }
 
@@ -374,7 +435,7 @@ public class BeatTheClockActivity extends AppCompatActivity implements GestureDe
         Point size = new Point();
         display.getSize(size);
         int width = size.x;
-        int height = size.y;
+        int height = size.y - tvTimeLeft.getHeight();
 
         // Make sure number doesn't land under an ad
         if (mAdView != null) {
@@ -382,7 +443,7 @@ public class BeatTheClockActivity extends AppCompatActivity implements GestureDe
         }
 
         float x = (float) (Math.random() * (width - view.getWidth()));
-        float y = (float) (Math.random() * (height - view.getHeight()));
+        float y = (float) (Math.random() * (height - view.getHeight()) + tvTimeLeft.getHeight());
 
         view.setX(x);
         view.setY(y);
@@ -556,16 +617,26 @@ public class BeatTheClockActivity extends AppCompatActivity implements GestureDe
 
         if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
 
-            if (count == 100) {
+            // All time
+            if (count_all_time == 100) {
                 Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_100_clicks_id));
-            } else if (count == 1000) {
+            } else if (count_all_time == 1000) {
                 Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_1000_clicks_id));
-            } else if (count == 10000) {
+            } else if (count_all_time == 10000) {
                 Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_10k_clicks_id));
-            } else if (count == 100000) {
+            } else if (count_all_time == 100000) {
                 Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_100k_clicks_id));
-            } else if (count == 1000000) {
+            } else if (count_all_time == 1000000) {
                 Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_1m_clicks_id));
+            }
+
+            // Beat the clock
+            if (count_beat_the_clock == 100) {
+                Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_ftt_100_clicks_id));
+            } else if (count_beat_the_clock == 1000) {
+                Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_ftt_1000_clicks_id));
+            } else if (count_beat_the_clock == 10000) {
+                Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_ftt_10k_clicks_id));
             }
         }
     }
@@ -575,20 +646,32 @@ public class BeatTheClockActivity extends AppCompatActivity implements GestureDe
 
         if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
 
-            if (count >= 100) {
+            // All time
+            if (count_all_time >= 100) {
                 Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_100_clicks_id));
             }
-            if (count >= 1000) {
+            if (count_all_time >= 1000) {
                 Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_1000_clicks_id));
             }
-            if (count >= 10000) {
+            if (count_all_time >= 10000) {
                 Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_10k_clicks_id));
             }
-            if (count >= 100000) {
+            if (count_all_time >= 100000) {
                 Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_100k_clicks_id));
             }
-            if (count >= 1000000) {
+            if (count_all_time >= 1000000) {
                 Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_1m_clicks_id));
+            }
+
+            // Beat the clock
+            if (count_beat_the_clock >= 100) {
+                Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_ftt_100_clicks_id));
+            }
+            if (count_beat_the_clock >= 1000) {
+                Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_ftt_1000_clicks_id));
+            }
+            if (count_beat_the_clock >= 10000) {
+                Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_ftt_10k_clicks_id));
             }
         }
     }
