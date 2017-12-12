@@ -17,4 +17,6 @@
     <string name="note_sorry_bug">Ups, da ist ein Fehler. Tut mir leid!</string>
     <string name="remove_ads">Werbung entfernen</string>
     <string name="report_issue">Problem melden</string>
+    <string name="classic">Klassisch</string>
+    <string name="beat_the_clock">Schneller als Zeit</string>
 </resources>

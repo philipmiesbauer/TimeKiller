@@ -21,6 +21,6 @@
     <string name="error_report_body_billing" translatable="false">Google Billing through up and Error</string>
     <string name="note_purchase_successful">Purchase Successful. Congratulations!</string>
     <string name="classic">Classic</string>
-    <string name="beat_the_clock">Timed</string>
-    <string name="secs_5">05</string>
+    <string name="beat_the_clock">Faster than Time</string>
+    <string name="secs_5" translatable="false">05</string>
 </resources>
