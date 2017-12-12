@@ -90,6 +90,8 @@ public class BeatTheClockActivity extends AppCompatActivity implements GestureDe
      */
     private static final int UI_ANIMATION_DELAY = 300;
     private static final int RC_SIGN_IN = 9001;
+    private final static long START_TIME_LEFT = 5000;
+    private final static long START_MILLIS_TO_ADD = 500;
     private final Handler mHideHandler = new Handler();
     private final Runnable mShowPart2Runnable = new Runnable() {
         @Override
@@ -117,11 +119,6 @@ public class BeatTheClockActivity extends AppCompatActivity implements GestureDe
     private long count_beat_the_clock;
     private Toast debugToast;
     private TextView tvCount;
-    private TextView tvTimeLeft;
-    private final static long START_TIME_LEFT = 5000;
-    private final static long START_MILLIS_TO_ADD = 500;
-    private ExtendableCountDownTimer timerTimeLeft;
-
     private final Runnable mHidePart2Runnable = new Runnable() {
         @SuppressLint("InlinedApi")
         @Override
@@ -139,6 +136,8 @@ public class BeatTheClockActivity extends AppCompatActivity implements GestureDe
                     | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
         }
     };
+    private TextView tvTimeLeft;
+    private ExtendableCountDownTimer timerTimeLeft;
     private Context context;
     private RelativeLayout rlActivity;
     private Menu menuTimerKiller;
@@ -323,6 +322,9 @@ public class BeatTheClockActivity extends AppCompatActivity implements GestureDe
     public boolean onOptionsItemSelected(MenuItem item) {
 
         switch (item.getItemId()) {
+            case R.id.menu_modes_classic:
+                Intent startIntent = new Intent(context, BeatTheClockActivity.class);
+                context.startActivity(startIntent);
             case R.id.menu_sign_in:
                 signInClicked();
                 return true;

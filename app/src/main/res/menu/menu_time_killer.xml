@@ -11,7 +11,7 @@
         android:title="@string/leaderboard"
         android:visible="true"
         app:showAsAction="never" />
-    <group android:id="@+id/menu_modes_group">
+    <menu android:id="@+id/menu_modes_group">
         <item
             android:id="@+id/menu_modes_classic"
             android:title="@string/classic"
@@ -22,7 +22,7 @@
             android:title="@string/beat_the_clock"
             android:visible="false"
             app:showAsAction="never" />
-    </group>
+    </menu>
     <item
         android:id="@+id/menu_remove_ads"
         android:icon="@drawable/ic_do_not_disturb_black_24dp"

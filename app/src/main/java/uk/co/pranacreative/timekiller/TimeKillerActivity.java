@@ -329,6 +329,9 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
     public boolean onOptionsItemSelected(MenuItem item) {
 
         switch (item.getItemId()) {
+            case R.id.menu_modes_beat_the_clock:
+                Intent startIntent = new Intent(context, BeatTheClockActivity.class);
+                context.startActivity(startIntent);
             case R.id.menu_sign_in:
                 signInClicked();
                 return true;
