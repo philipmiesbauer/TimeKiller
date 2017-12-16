@@ -307,7 +307,9 @@ public class BeatTheClockActivity extends AppCompatActivity implements GestureDe
         if (prefs.getBoolean(getString(R.string.inapp_remove_ads_id), false)) {
             // Ads have been removed
             MenuItem removeAds = menu.findItem(R.id.menu_remove_ads);
-            removeAds.setVisible(false);
+            if (removeAds != null) {
+                removeAds.setVisible(false);
+            }
         }
         MenuItem classic = menu.findItem(R.id.menu_modes_classic);
         MenuItem timed = menu.findItem(R.id.menu_modes_beat_the_clock);
