@@ -227,8 +227,12 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
     @Override
     protected void onStop() {
         super.onStop();
-        Games.getLeaderboardsClient(this, GoogleSignIn.getLastSignedInAccount(this))
-                .submitScore(getString(R.string.leaderboard_all_time), count_all_time);
+
+        mGoogleSignInAccount = GoogleSignIn.getLastSignedInAccount(this);
+        if (mGoogleSignInAccount != null) {
+            Games.getLeaderboardsClient(this, mGoogleSignInAccount)
+                    .submitScore(getString(R.string.leaderboard_all_time), count_all_time);
+        }
     }
 
     @Override
@@ -255,11 +259,8 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
             }
         }
 
-        MenuItem classic = menu.findItem(R.id.menu_modes_classic);
-        MenuItem timed = menu.findItem(R.id.menu_modes_beat_the_clock);
-
-        classic.setVisible(false);
-        timed.setVisible(true);
+        mGoogleSignInAccount = GoogleSignIn.getLastSignedInAccount(this);
+        updateSignInOutUI(mGoogleSignInAccount);
 
         return true;
     }
@@ -278,41 +279,56 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
                 signOutclicked();
                 return true;
             case R.id.menu_achievements:
-                Games.getAchievementsClient(this, GoogleSignIn.getLastSignedInAccount(this))
-                        .getAchievementsIntent()
-                        .addOnSuccessListener(new OnSuccessListener<Intent>() {
-                            @Override
-                            public void onSuccess(Intent intent) {
-                                startActivityForResult(intent, REQUEST_ACHIEVEMENTS);
-                            }
-                        });
+                mGoogleSignInAccount = GoogleSignIn.getLastSignedInAccount(this);
+                if (mGoogleSignInAccount != null) {
+                    Games.getAchievementsClient(this, mGoogleSignInAccount)
+                            .getAchievementsIntent()
+                            .addOnSuccessListener(new OnSuccessListener<Intent>() {
+                                @Override
+                                public void onSuccess(Intent intent) {
+                                    startActivityForResult(intent, REQUEST_ACHIEVEMENTS);
+                                }
+                            });
+                }
                 return true;
             case R.id.menu_leaderboard_all_time:
 
                 // Submit scores before checking the leasderboard
-                Games.getLeaderboardsClient(this, GoogleSignIn.getLastSignedInAccount(this))
-                        .submitScore(getString(R.string.leaderboard_all_time), count_all_time);
-                Games.getLeaderboardsClient(this, GoogleSignIn.getLastSignedInAccount(this))
-                        .getLeaderboardIntent(getString(R.string.leaderboard_all_time))
-                        .addOnSuccessListener(new OnSuccessListener<Intent>() {
-                            @Override
-                            public void onSuccess(Intent intent) {
-                                startActivityForResult(intent, REQUEST_LEADERBOARD);
-                            }
-                        });
+
+                mGoogleSignInAccount = GoogleSignIn.getLastSignedInAccount(this);
+                if (mGoogleSignInAccount != null) {
+                    Games.getLeaderboardsClient(this, mGoogleSignInAccount)
+                            .submitScore(getString(R.string.leaderboard_all_time), count_all_time);
+                    Games.getLeaderboardsClient(this, mGoogleSignInAccount)
+                            .getLeaderboardIntent(getString(R.string.leaderboard_all_time))
+                            .addOnSuccessListener(new OnSuccessListener<Intent>() {
+                                @Override
+                                public void onSuccess(Intent intent) {
+                                    startActivityForResult(intent, REQUEST_LEADERBOARD);
+                                }
+                            });
+                } else {
+                    notifyNoGoogleSignIn();
+                }
                 return true;
             case R.id.menu_leaderboard_beat_the_clock:
                 // Submit scores before checking the leaderboard
-                Games.getLeaderboardsClient(this, GoogleSignIn.getLastSignedInAccount(this))
-                        .submitScore(getString(R.string.leaderboard_all_time), count_all_time);
-                Games.getLeaderboardsClient(this, GoogleSignIn.getLastSignedInAccount(this))
-                        .getLeaderboardIntent(getString(R.string.leaderboard_beat_the_clock))
-                        .addOnSuccessListener(new OnSuccessListener<Intent>() {
-                            @Override
-                            public void onSuccess(Intent intent) {
-                                startActivityForResult(intent, REQUEST_LEADERBOARD);
-                            }
-                        });
+
+                mGoogleSignInAccount = GoogleSignIn.getLastSignedInAccount(this);
+                if (mGoogleSignInAccount != null) {
+                    Games.getLeaderboardsClient(this, mGoogleSignInAccount)
+                            .submitScore(getString(R.string.leaderboard_all_time), count_all_time);
+                    Games.getLeaderboardsClient(this, mGoogleSignInAccount)
+                            .getLeaderboardIntent(getString(R.string.leaderboard_beat_the_clock))
+                            .addOnSuccessListener(new OnSuccessListener<Intent>() {
+                                @Override
+                                public void onSuccess(Intent intent) {
+                                    startActivityForResult(intent, REQUEST_LEADERBOARD);
+                                }
+                            });
+                } else {
+                    notifyNoGoogleSignIn();
+                }
                 return true;
             case R.id.menu_remove_ads:
                 removeAds();
@@ -493,48 +509,66 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
 
     // Call when the sign-out button is clicked
     protected void signOutclicked() {
-        // TODO Sign Out
-        updateSignInOutUI(null);
+
+        GoogleSignInClient signInClient = GoogleSignIn.getClient(this,
+                GoogleSignInOptions.DEFAULT_GAMES_SIGN_IN);
+        signInClient.signOut().addOnCompleteListener(this,
+                new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        // at this point, the user is signed out.
+                        updateSignInOutUI(null);
+                    }
+                });
     }
 
     protected void unlockEnjoyAchievement() {
-        Games.getAchievementsClient(this, GoogleSignIn.getLastSignedInAccount(this)).unlock(getString(R.string.achievement_enjoy_view_id));
 
+        mGoogleSignInAccount = GoogleSignIn.getLastSignedInAccount(this);
+        if (mGoogleSignInAccount != null) {
+            Games.getAchievementsClient(this, mGoogleSignInAccount).unlock(getString(R.string.achievement_enjoy_view_id));
+        }
     }
 
     protected void unlockCountAchievements() {
         // Achievements from clicking
 
-        if (count_all_time == 100) {
-            Games.getAchievementsClient(this, GoogleSignIn.getLastSignedInAccount(this)).unlock(getString(R.string.achievement_100_clicks_id));
-        } else if (count_all_time == 1000) {
-            Games.getAchievementsClient(this, GoogleSignIn.getLastSignedInAccount(this)).unlock(getString(R.string.achievement_1000_clicks_id));
-        } else if (count_all_time == 10000) {
-            Games.getAchievementsClient(this, GoogleSignIn.getLastSignedInAccount(this)).unlock(getString(R.string.achievement_10k_clicks_id));
-        } else if (count_all_time == 100000) {
-            Games.getAchievementsClient(this, GoogleSignIn.getLastSignedInAccount(this)).unlock(getString(R.string.achievement_100k_clicks_id));
-        } else if (count_all_time == 1000000) {
-            Games.getAchievementsClient(this, GoogleSignIn.getLastSignedInAccount(this)).unlock(getString(R.string.achievement_1m_clicks_id));
+        mGoogleSignInAccount = GoogleSignIn.getLastSignedInAccount(this);
+        if (mGoogleSignInAccount != null) {
+            if (count_all_time == 100) {
+                Games.getAchievementsClient(this, mGoogleSignInAccount).unlock(getString(R.string.achievement_100_clicks_id));
+            } else if (count_all_time == 1000) {
+                Games.getAchievementsClient(this, mGoogleSignInAccount).unlock(getString(R.string.achievement_1000_clicks_id));
+            } else if (count_all_time == 10000) {
+                Games.getAchievementsClient(this, mGoogleSignInAccount).unlock(getString(R.string.achievement_10k_clicks_id));
+            } else if (count_all_time == 100000) {
+                Games.getAchievementsClient(this, mGoogleSignInAccount).unlock(getString(R.string.achievement_100k_clicks_id));
+            } else if (count_all_time == 1000000) {
+                Games.getAchievementsClient(this, mGoogleSignInAccount).unlock(getString(R.string.achievement_1m_clicks_id));
+            }
         }
     }
 
     protected void checkCountAchievements() {
         // Achievements from clicking
 
-        if (count_all_time >= 100) {
-            Games.getAchievementsClient(this, GoogleSignIn.getLastSignedInAccount(this)).unlock(getString(R.string.achievement_100_clicks_id));
-        }
-        if (count_all_time >= 1000) {
-            Games.getAchievementsClient(this, GoogleSignIn.getLastSignedInAccount(this)).unlock(getString(R.string.achievement_1000_clicks_id));
-        }
-        if (count_all_time >= 10000) {
-            Games.getAchievementsClient(this, GoogleSignIn.getLastSignedInAccount(this)).unlock(getString(R.string.achievement_10k_clicks_id));
-        }
-        if (count_all_time >= 100000) {
-            Games.getAchievementsClient(this, GoogleSignIn.getLastSignedInAccount(this)).unlock(getString(R.string.achievement_100k_clicks_id));
-        }
-        if (count_all_time >= 1000000) {
-            Games.getAchievementsClient(this, GoogleSignIn.getLastSignedInAccount(this)).unlock(getString(R.string.achievement_1m_clicks_id));
+        mGoogleSignInAccount = GoogleSignIn.getLastSignedInAccount(this);
+        if (mGoogleSignInAccount != null) {
+            if (count_all_time >= 100) {
+                Games.getAchievementsClient(this, mGoogleSignInAccount).unlock(getString(R.string.achievement_100_clicks_id));
+            }
+            if (count_all_time >= 1000) {
+                Games.getAchievementsClient(this, mGoogleSignInAccount).unlock(getString(R.string.achievement_1000_clicks_id));
+            }
+            if (count_all_time >= 10000) {
+                Games.getAchievementsClient(this, mGoogleSignInAccount).unlock(getString(R.string.achievement_10k_clicks_id));
+            }
+            if (count_all_time >= 100000) {
+                Games.getAchievementsClient(this, mGoogleSignInAccount).unlock(getString(R.string.achievement_100k_clicks_id));
+            }
+            if (count_all_time >= 1000000) {
+                Games.getAchievementsClient(this, mGoogleSignInAccount).unlock(getString(R.string.achievement_1m_clicks_id));
+            }
         }
     }
 
@@ -591,22 +625,22 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
     }
 
     public void updateSignInOutUI(GoogleSignInAccount account) {
-        if (account != null) {
-            // The player is signed in. Hide the sign-in button and allow the
-            // player to proceed.
+        if (menuTimerKiller != null) {
             MenuItem signIn = menuTimerKiller.findItem(R.id.menu_sign_in);
             MenuItem signOut = menuTimerKiller.findItem(R.id.menu_sign_out);
-
-            signIn.setVisible(false);
-            signOut.setVisible(true);
-        } else {
-            // The player is NOT signed in. Hide the sign-in button and allow the
-            // player to proceed.
-            MenuItem signIn = menuTimerKiller.findItem(R.id.menu_sign_in);
-            MenuItem signOut = menuTimerKiller.findItem(R.id.menu_sign_out);
-
-            signIn.setVisible(true);
-            signOut.setVisible(false);
+            if (signIn != null && signOut != null) {
+                if (account != null) {
+                    // The player is signed in. Hide the sign-in button and allow the
+                    // player to proceed.
+                    signIn.setVisible(false);
+                    signOut.setVisible(true);
+                } else {
+                    // The player is NOT signed in. Hide the sign-in button and allow the
+                    // player to proceed.
+                    signIn.setVisible(true);
+                    signOut.setVisible(false);
+                }
+            }
         }
 
     }
