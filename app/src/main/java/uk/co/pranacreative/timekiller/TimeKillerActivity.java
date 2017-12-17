@@ -16,6 +16,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
 import android.support.v4.view.GestureDetectorCompat;
@@ -42,10 +43,15 @@ import com.android.vending.billing.IInAppBillingService;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.MobileAds;
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.auth.api.signin.GoogleSignInClient;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.games.Games;
-import com.google.example.games.basegameutils.BaseGameUtils;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -59,22 +65,16 @@ import java.util.TimerTask;
  */
 public class TimeKillerActivity extends AppCompatActivity implements GestureDetector.OnGestureListener,
         GestureDetector.OnDoubleTapListener,
-        GoogleApiClient.ConnectionCallbacks,
-        GoogleApiClient.OnConnectionFailedListener,
         PurchasesUpdatedListener {
-
-    private static final String TAG = TimeKillerActivity.class.getSimpleName();
 
     // Games API constants
     // Achievement IDs
     protected static final int REQUEST_ACHIEVEMENTS = 123; // An arbitrary integer used as the request code
     // Leaderboard IDs
     protected static final int REQUEST_LEADERBOARD = 124; // An arbitrary integer used as the request code
-
     //Preferences
     protected static final String COUNT_STR = "COUNT";
     protected static final String DOUBLE_TAP_STR = "DOUBLE_TAP";
-
     // AdMobs constants
     protected static final String ADMOBS_APP_ID = "ca-app-pub-6355028338567451~1344025701";
     protected static final int RC_BILLING_REMOVE_ADS = 1001;
@@ -91,6 +91,7 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
      */
     protected static final int UI_ANIMATION_DELAY = 300;
     protected static final int RC_SIGN_IN = 9001;
+    private static final String TAG = TimeKillerActivity.class.getSimpleName();
     protected final Handler mHideHandler = new Handler();
     protected final Runnable mShowPart2Runnable = new Runnable() {
         @Override
@@ -102,16 +103,12 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
             }
         }
     };
-    // In-app Billing
-    IInAppBillingService mService;
     protected BillingClient mBillingClient;
     protected boolean mIsServiceConnected;
     protected int mBillingClientResponseCode;
     // Google API
-    protected GoogleApiClient mGoogleApiClient;
-    protected boolean mResolvingConnectionFailure = false;
-    protected boolean mAutoStartSignInFlow = false;
-    protected boolean mSignInClicked = false;
+    protected GoogleSignInClient mGoogleSignInClient;
+    protected GoogleSignInAccount mGoogleSignInAccount;
     // Logic Variables
     protected GestureDetectorCompat mDetector;
     protected long count_all_time;
@@ -149,6 +146,8 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
     protected Toast toastNoGoogleSignIn;
     protected Activity activity;
     protected AdView mAdView;
+    // In-app Billing
+    IInAppBillingService mService;
     ServiceConnection mServiceConn = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
@@ -210,15 +209,6 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
     }
 
     @Override
-    protected void onStart() {
-        super.onStart();
-
-        if (mGoogleApiClient != null) {
-            mGoogleApiClient.connect();
-        }
-    }
-
-    @Override
     protected void onResume() {
         super.onResume();
         resetCurrentNumberTimer();
@@ -237,13 +227,8 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
     @Override
     protected void onStop() {
         super.onStop();
-
-        if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
-            Games.Leaderboards.submitScore(mGoogleApiClient, getString(R.string.leaderboard_all_time), count_all_time);
-            mGoogleApiClient.disconnect();
-        } else {
-            notifyNoGoogleSignIn();
-        }
+        Games.getLeaderboardsClient(this, GoogleSignIn.getLastSignedInAccount(this))
+                .submitScore(getString(R.string.leaderboard_all_time), count_all_time);
     }
 
     @Override
@@ -293,36 +278,41 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
                 signOutclicked();
                 return true;
             case R.id.menu_achievements:
-                if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
-                    // Update any potentially missed achievements
-                    checkCountAchievements();
-                    // Show achievements
-                    startActivityForResult(Games.Achievements.getAchievementsIntent(mGoogleApiClient),
-                            REQUEST_ACHIEVEMENTS);
-                } else {
-                    notifyNoGoogleSignIn();
-                }
+                Games.getAchievementsClient(this, GoogleSignIn.getLastSignedInAccount(this))
+                        .getAchievementsIntent()
+                        .addOnSuccessListener(new OnSuccessListener<Intent>() {
+                            @Override
+                            public void onSuccess(Intent intent) {
+                                startActivityForResult(intent, REQUEST_ACHIEVEMENTS);
+                            }
+                        });
                 return true;
             case R.id.menu_leaderboard_all_time:
 
-                if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
-                    // Submit scores before checking the leasderboard
-                    Games.Leaderboards.submitScore(mGoogleApiClient, getString(R.string.leaderboard_all_time), count_all_time);
-                    startActivityForResult(Games.Leaderboards.getLeaderboardIntent(mGoogleApiClient,
-                            getString(R.string.leaderboard_all_time)), REQUEST_LEADERBOARD);
-                } else {
-                    notifyNoGoogleSignIn();
-                }
+                // Submit scores before checking the leasderboard
+                Games.getLeaderboardsClient(this, GoogleSignIn.getLastSignedInAccount(this))
+                        .submitScore(getString(R.string.leaderboard_all_time), count_all_time);
+                Games.getLeaderboardsClient(this, GoogleSignIn.getLastSignedInAccount(this))
+                        .getLeaderboardIntent(getString(R.string.leaderboard_all_time))
+                        .addOnSuccessListener(new OnSuccessListener<Intent>() {
+                            @Override
+                            public void onSuccess(Intent intent) {
+                                startActivityForResult(intent, REQUEST_LEADERBOARD);
+                            }
+                        });
                 return true;
             case R.id.menu_leaderboard_beat_the_clock:
-                if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
-                    // Submit scores before checking the leaderboard
-                    Games.Leaderboards.submitScore(mGoogleApiClient, getString(R.string.leaderboard_all_time), count_all_time);
-                    startActivityForResult(Games.Leaderboards.getLeaderboardIntent(mGoogleApiClient,
-                            getString(R.string.leaderboard_beat_the_clock)), REQUEST_LEADERBOARD);
-                } else {
-                    notifyNoGoogleSignIn();
-                }
+                // Submit scores before checking the leaderboard
+                Games.getLeaderboardsClient(this, GoogleSignIn.getLastSignedInAccount(this))
+                        .submitScore(getString(R.string.leaderboard_all_time), count_all_time);
+                Games.getLeaderboardsClient(this, GoogleSignIn.getLastSignedInAccount(this))
+                        .getLeaderboardIntent(getString(R.string.leaderboard_beat_the_clock))
+                        .addOnSuccessListener(new OnSuccessListener<Intent>() {
+                            @Override
+                            public void onSuccess(Intent intent) {
+                                startActivityForResult(intent, REQUEST_LEADERBOARD);
+                            }
+                        });
                 return true;
             case R.id.menu_remove_ads:
                 removeAds();
@@ -497,71 +487,54 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
 
     // Call when the sign-in button is clicked
     protected void signInClicked() {
-        mSignInClicked = true;
-        if (mGoogleApiClient != null) {
-            mGoogleApiClient.connect();
-        }
+        Intent signInIntent = mGoogleSignInClient.getSignInIntent();
+        startActivityForResult(signInIntent, RC_SIGN_IN);
     }
 
     // Call when the sign-out button is clicked
     protected void signOutclicked() {
-        mSignInClicked = false;
-        mAutoStartSignInFlow = false;
-
-        Games.signOut(mGoogleApiClient);
-
-        MenuItem signIn = menuTimerKiller.findItem(R.id.menu_sign_in);
-        MenuItem signOut = menuTimerKiller.findItem(R.id.menu_sign_out);
-
-        signIn.setVisible(true);
-        signOut.setVisible(false);
+        // TODO Sign Out
+        updateSignInOutUI(null);
     }
 
     protected void unlockEnjoyAchievement() {
-        if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
-            Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_enjoy_view_id));
-        }
+        Games.getAchievementsClient(this, GoogleSignIn.getLastSignedInAccount(this)).unlock(getString(R.string.achievement_enjoy_view_id));
+
     }
 
     protected void unlockCountAchievements() {
         // Achievements from clicking
 
-        if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
-
-            if (count_all_time == 100) {
-                Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_100_clicks_id));
-            } else if (count_all_time == 1000) {
-                Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_1000_clicks_id));
-            } else if (count_all_time == 10000) {
-                Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_10k_clicks_id));
-            } else if (count_all_time == 100000) {
-                Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_100k_clicks_id));
-            } else if (count_all_time == 1000000) {
-                Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_1m_clicks_id));
-            }
+        if (count_all_time == 100) {
+            Games.getAchievementsClient(this, GoogleSignIn.getLastSignedInAccount(this)).unlock(getString(R.string.achievement_100_clicks_id));
+        } else if (count_all_time == 1000) {
+            Games.getAchievementsClient(this, GoogleSignIn.getLastSignedInAccount(this)).unlock(getString(R.string.achievement_1000_clicks_id));
+        } else if (count_all_time == 10000) {
+            Games.getAchievementsClient(this, GoogleSignIn.getLastSignedInAccount(this)).unlock(getString(R.string.achievement_10k_clicks_id));
+        } else if (count_all_time == 100000) {
+            Games.getAchievementsClient(this, GoogleSignIn.getLastSignedInAccount(this)).unlock(getString(R.string.achievement_100k_clicks_id));
+        } else if (count_all_time == 1000000) {
+            Games.getAchievementsClient(this, GoogleSignIn.getLastSignedInAccount(this)).unlock(getString(R.string.achievement_1m_clicks_id));
         }
     }
 
     protected void checkCountAchievements() {
         // Achievements from clicking
 
-        if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
-
-            if (count_all_time >= 100) {
-                Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_100_clicks_id));
-            }
-            if (count_all_time >= 1000) {
-                Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_1000_clicks_id));
-            }
-            if (count_all_time >= 10000) {
-                Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_10k_clicks_id));
-            }
-            if (count_all_time >= 100000) {
-                Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_100k_clicks_id));
-            }
-            if (count_all_time >= 1000000) {
-                Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_1m_clicks_id));
-            }
+        if (count_all_time >= 100) {
+            Games.getAchievementsClient(this, GoogleSignIn.getLastSignedInAccount(this)).unlock(getString(R.string.achievement_100_clicks_id));
+        }
+        if (count_all_time >= 1000) {
+            Games.getAchievementsClient(this, GoogleSignIn.getLastSignedInAccount(this)).unlock(getString(R.string.achievement_1000_clicks_id));
+        }
+        if (count_all_time >= 10000) {
+            Games.getAchievementsClient(this, GoogleSignIn.getLastSignedInAccount(this)).unlock(getString(R.string.achievement_10k_clicks_id));
+        }
+        if (count_all_time >= 100000) {
+            Games.getAchievementsClient(this, GoogleSignIn.getLastSignedInAccount(this)).unlock(getString(R.string.achievement_100k_clicks_id));
+        }
+        if (count_all_time >= 1000000) {
+            Games.getAchievementsClient(this, GoogleSignIn.getLastSignedInAccount(this)).unlock(getString(R.string.achievement_1m_clicks_id));
         }
     }
 
@@ -617,56 +590,25 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
         return false;
     }
 
-    @Override
-    public void onConnected(@Nullable Bundle bundle) {
-        // The player is signed in. Hide the sign-in button and allow the
-        // player to proceed.
-        MenuItem signIn = menuTimerKiller.findItem(R.id.menu_sign_in);
-        MenuItem signOut = menuTimerKiller.findItem(R.id.menu_sign_out);
+    public void updateSignInOutUI(GoogleSignInAccount account) {
+        if (account != null) {
+            // The player is signed in. Hide the sign-in button and allow the
+            // player to proceed.
+            MenuItem signIn = menuTimerKiller.findItem(R.id.menu_sign_in);
+            MenuItem signOut = menuTimerKiller.findItem(R.id.menu_sign_out);
 
-        mAutoStartSignInFlow = true;
+            signIn.setVisible(false);
+            signOut.setVisible(true);
+        } else {
+            // The player is NOT signed in. Hide the sign-in button and allow the
+            // player to proceed.
+            MenuItem signIn = menuTimerKiller.findItem(R.id.menu_sign_in);
+            MenuItem signOut = menuTimerKiller.findItem(R.id.menu_sign_out);
 
-        signIn.setVisible(false);
-        signOut.setVisible(true);
-
-    }
-
-    @Override
-    public void onConnectionFailed(ConnectionResult connectionResult) {
-        if (mResolvingConnectionFailure) {
-            // already resolving
-            return;
+            signIn.setVisible(true);
+            signOut.setVisible(false);
         }
 
-        // if the sign-in button was clicked or if auto sign-in is enabled,
-        // launch the sign-in flow
-        if (mSignInClicked || mAutoStartSignInFlow) {
-            mAutoStartSignInFlow = false;
-            mSignInClicked = false;
-            mResolvingConnectionFailure = true;
-
-            // Attempt to resolve the connection failure using BaseGameUtils.
-            // The R.string.signin_other_error value should reference a generic
-            // error string in your strings.xml file, such as "There was
-            // an issue with sign-in, please try again later."
-            if (!BaseGameUtils.resolveConnectionFailure(this,
-                    mGoogleApiClient, connectionResult,
-                    RC_SIGN_IN, R.string.sign_in_other_error)) {
-                mResolvingConnectionFailure = false;
-            }
-        }
-
-        // Put code here to display the sign-in button
-        MenuItem signIn = menuTimerKiller.findItem(R.id.menu_sign_in);
-        MenuItem signOut = menuTimerKiller.findItem(R.id.menu_sign_out);
-        signIn.setVisible(true);
-        signOut.setVisible(false);
-    }
-
-    @Override
-    public void onConnectionSuspended(int i) {
-        // Attempt to reconnect
-        mGoogleApiClient.connect();
     }
 
     protected void setUpEnvironment() {
@@ -702,13 +644,28 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
                     }).show();
         }
 
-        // Create the Google Api Client with access to the Play Games services
-        mGoogleApiClient = new GoogleApiClient.Builder(this)
-                .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
-                .addApi(Games.API).addScope(Games.SCOPE_GAMES)
-                // add other APIs and scopes here as needed
+        // Configure sign-in to request the user's ID, email address, and basic
+        // profile. ID and basic profile are included in DEFAULT_SIGN_IN.
+        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken(getString(R.string.google_games_web_client_id))
+                .requestEmail()
                 .build();
+
+        // Build a GoogleSignInClient with the options specified by gso.
+        mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
+
+        mGoogleSignInClient.silentSignIn()
+                .addOnCompleteListener(this, new OnCompleteListener<GoogleSignInAccount>() {
+                    @Override
+                    public void onComplete(@NonNull Task<GoogleSignInAccount> task) {
+                        handleSignInResult(task);
+                    }
+                });
+
+        // Check for existing Google Sign In account, if the user is already signed in
+        // the GoogleSignInAccount will be non-null.
+        mGoogleSignInAccount = GoogleSignIn.getLastSignedInAccount(this);
+        updateSignInOutUI(mGoogleSignInAccount);
 
         if (!prefs.getBoolean(getString(R.string.inapp_remove_ads_id), false)) {
             // Ads have not been removed
@@ -728,21 +685,30 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
         mBillingClient = BillingClient.newBuilder(this).setListener(this).build();
     }
 
-    protected void onActivityResult(int requestCode, int resultCode,
-                                    Intent intent) {
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        // Result returned from launching the Intent from GoogleSignInClient.getSignInIntent(...);
         if (requestCode == RC_SIGN_IN) {
-            mSignInClicked = false;
-            mResolvingConnectionFailure = false;
-            if (resultCode == RESULT_OK) {
-                mGoogleApiClient.connect();
-            } else {
-                // Bring up an error dialog to alert the user that sign-in
-                // failed. The R.string.signin_failure should reference an error
-                // string in your strings.xml file that tells the user they
-                // could not be signed in, such as "Unable to sign in."
-                BaseGameUtils.showActivityResultError(this,
-                        requestCode, resultCode, R.string.signin_failure);
-            }
+            // The Task returned from this call is always completed, no need to attach
+            // a listener.
+            Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
+            handleSignInResult(task);
+        }
+    }
+
+    private void handleSignInResult(@NonNull Task<GoogleSignInAccount> completedTask) {
+        try {
+            mGoogleSignInAccount = completedTask.getResult(ApiException.class);
+            String idToken = mGoogleSignInAccount.getIdToken();
+
+            // TODO(developer): send ID Token to server and validate
+
+            updateSignInOutUI(mGoogleSignInAccount);
+        } catch (ApiException e) {
+            Log.w(TAG, "handleSignInResult:error", e);
+            updateSignInOutUI(null);
         }
     }
 

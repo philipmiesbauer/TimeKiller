@@ -17,4 +17,6 @@
 
     <string name="leaderboard_all_time" translatable="false">CgkIw5vCgpQQEAIQAw</string>
     <string name="leaderboard_beat_the_clock" translatable="false">CgkIw5vCgpQQEAIQDQ</string>
+
+    <string name="google_games_web_client_id" translatable="false">555129802179-3lt6a8b6qg26ntjhj183e9b7pk0duh7i.apps.googleusercontent.com</string>
 </resources>
