@@ -40,7 +40,7 @@ public class BeatTheClockActivity extends TimeKillerActivity {
     private TextView tvHighScore;
     private TextView tvAddedTime;
     private long START_TIME_LEFT = 5000;
-    private long START_MILLIS_TO_ADD = 1000;
+    private long START_MILLIS_TO_ADD = 500;
     private ExtendableCountDownTimer timerTimeLeft;
 
     private float tvCountX;
@@ -140,7 +140,7 @@ public class BeatTheClockActivity extends TimeKillerActivity {
                 Intent startIntent = new Intent(context, TimeKillerActivity.class);
                 context.startActivity(startIntent);
                 return true;
-            case R.id.menu_leaderboard:
+            case R.id.menu_leaderboard_beat_the_clock:
                 if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
                     // Submit scores before checking the leaderboard
                     Games.Leaderboards.submitScore(mGoogleApiClient, getString(R.string.leaderboard_all_time), count_all_time);

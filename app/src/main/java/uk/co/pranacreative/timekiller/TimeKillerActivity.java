@@ -303,13 +303,23 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
                     notifyNoGoogleSignIn();
                 }
                 return true;
-            case R.id.menu_leaderboard:
+            case R.id.menu_leaderboard_all_time:
 
                 if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
                     // Submit scores before checking the leasderboard
                     Games.Leaderboards.submitScore(mGoogleApiClient, getString(R.string.leaderboard_all_time), count_all_time);
                     startActivityForResult(Games.Leaderboards.getLeaderboardIntent(mGoogleApiClient,
                             getString(R.string.leaderboard_all_time)), REQUEST_LEADERBOARD);
+                } else {
+                    notifyNoGoogleSignIn();
+                }
+                return true;
+            case R.id.menu_leaderboard_beat_the_clock:
+                if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
+                    // Submit scores before checking the leaderboard
+                    Games.Leaderboards.submitScore(mGoogleApiClient, getString(R.string.leaderboard_all_time), count_all_time);
+                    startActivityForResult(Games.Leaderboards.getLeaderboardIntent(mGoogleApiClient,
+                            getString(R.string.leaderboard_beat_the_clock)), REQUEST_LEADERBOARD);
                 } else {
                     notifyNoGoogleSignIn();
                 }

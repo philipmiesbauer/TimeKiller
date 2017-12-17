@@ -2,10 +2,24 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
-        android:id="@+id/menu_leaderboard"
+        android:id="@+id/menu_leaderboard_menu"
         android:title="@string/leaderboard"
         android:visible="true"
-        app:showAsAction="never" />
+        app:showAsAction="never">
+        <menu>
+            <item
+                android:id="@+id/menu_leaderboard_all_time"
+                android:title="@string/classic"
+                android:visible="true"
+                app:showAsAction="never" />
+            <item
+                android:id="@+id/menu_leaderboard_beat_the_clock"
+                android:title="@string/beat_the_clock"
+                android:visible="true"
+                app:showAsAction="never" />
+        </menu>
+    </item>
+
     <item
         android:id="@+id/menu_achievements"
         android:title="@string/achievements"
