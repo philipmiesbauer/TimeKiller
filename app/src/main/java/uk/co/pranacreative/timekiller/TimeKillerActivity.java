@@ -1,5 +1,6 @@
 package uk.co.pranacreative.timekiller;
 
+import android.animation.LayoutTransition;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ComponentName;
@@ -9,6 +10,7 @@ import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.graphics.Point;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -173,6 +175,11 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
         mVisible = true;
         tvCount = findViewById(R.id.tv_count);
         rlActivity = findViewById(R.id.rl_activity);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+            rlActivity.getLayoutTransition()
+                    .enableTransitionType(LayoutTransition.CHANGING);
+        }
 
 
         // Set up the user interaction to manually show or hide the system UI.

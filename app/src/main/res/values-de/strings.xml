@@ -19,4 +19,5 @@
     <string name="report_issue">Problem melden</string>
     <string name="classic">Klassisch</string>
     <string name="beat_the_clock">Schneller als Zeit</string>
+    <string name="game_modes">Spielmodus</string>
 </resources>

@@ -1,5 +1,6 @@
 package uk.co.pranacreative.timekiller;
 
+import android.animation.LayoutTransition;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ComponentName;
@@ -9,6 +10,7 @@ import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.graphics.Point;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -182,11 +184,19 @@ public class BeatTheClockActivity extends AppCompatActivity implements GestureDe
         rlActivity = findViewById(R.id.rl_activity);
         tvTimeLeft = findViewById(R.id.tv_time_left);
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+            rlActivity.getLayoutTransition()
+                    .enableTransitionType(LayoutTransition.CHANGING);
+        }
 
         // Set up the user interaction to manually show or hide the system UI.
         tvCount.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                // Start timer if not running
+                if (count_beat_the_clock == 0) {
+                    timerTimeLeft.start();
+                }
                 hide();
                 addTime();
                 countUp();
@@ -194,7 +204,7 @@ public class BeatTheClockActivity extends AppCompatActivity implements GestureDe
                 changeBackgroundColour();
                 resetCurrentNumberTimer();
 
-                tvCount.setText(String.valueOf(count_all_time));
+                tvCount.setText(String.valueOf(count_beat_the_clock));
             }
         });
 
@@ -325,7 +335,7 @@ public class BeatTheClockActivity extends AppCompatActivity implements GestureDe
 
         switch (item.getItemId()) {
             case R.id.menu_modes_classic:
-                Intent startIntent = new Intent(context, BeatTheClockActivity.class);
+                Intent startIntent = new Intent(context, TimeKillerActivity.class);
                 context.startActivity(startIntent);
             case R.id.menu_sign_in:
                 signInClicked();
@@ -386,7 +396,7 @@ public class BeatTheClockActivity extends AppCompatActivity implements GestureDe
 
         /*  Set up timer to run for default time and update every 239ms
             239 ms will make sure the millis second units change every time, making it look like
-            it is constantly updating.*/
+            it is updating every millisecond.*/
         timerTimeLeft = new ExtendableCountDownTimer(START_TIME_LEFT, 239) {
             @Override
             public void onTimerTick(long l) {

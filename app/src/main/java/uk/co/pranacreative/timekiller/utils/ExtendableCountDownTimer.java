@@ -46,6 +46,10 @@ public abstract class ExtendableCountDownTimer {
         };
     }
 
+    public void start() {
+        timer.start();
+    }
+
     public abstract void onTimerTick(long l);
 
     public abstract void onTimerFinish();

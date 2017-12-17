@@ -2,27 +2,33 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
+        android:id="@+id/menu_leaderboard"
+        android:title="@string/leaderboard"
+        android:visible="true"
+        app:showAsAction="never" />
+    <item
         android:id="@+id/menu_achievements"
         android:title="@string/achievements"
         android:visible="true"
         app:showAsAction="never" />
     <item
-        android:id="@+id/menu_leaderboard"
-        android:title="@string/leaderboard"
+        android:id="@+id/menu_modes_group"
+        android:title="@string/game_modes"
         android:visible="true"
-        app:showAsAction="never" />
-    <menu android:id="@+id/menu_modes_group">
-        <item
-            android:id="@+id/menu_modes_classic"
-            android:title="@string/classic"
-            android:visible="true"
-            app:showAsAction="never" />
-        <item
-            android:id="@+id/menu_modes_beat_the_clock"
-            android:title="@string/beat_the_clock"
-            android:visible="false"
-            app:showAsAction="never" />
-    </menu>
+        app:showAsAction="never">
+        <menu>
+            <item
+                android:id="@+id/menu_modes_classic"
+                android:title="@string/classic"
+                android:visible="true"
+                app:showAsAction="never" />
+            <item
+                android:id="@+id/menu_modes_beat_the_clock"
+                android:title="@string/beat_the_clock"
+                android:visible="false"
+                app:showAsAction="never" />
+        </menu>
+    </item>
     <item
         android:id="@+id/menu_remove_ads"
         android:icon="@drawable/ic_do_not_disturb_black_24dp"
