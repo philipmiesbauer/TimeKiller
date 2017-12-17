@@ -45,4 +45,24 @@
         android:background="@drawable/rounded_corners"
         android:text="@string/secs_5" />
 
+    <TextView
+        android:id="@+id/tv_highscore"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="5dp"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentTop="true"
+        android:text="@string/highscore" />
+
+    <TextView
+        android:id="@+id/tv_added_time"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/tv_time_left"
+        android:layout_centerHorizontal="true"
+        android:textColor="@android:color/holo_green_light"
+        android:textSize="18sp"
+        android:text="+ Added Time"
+        android:visibility="invisible" />
+
 </RelativeLayout>

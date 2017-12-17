@@ -1,56 +1,24 @@
 package uk.co.pranacreative.timekiller;
 
-import android.animation.LayoutTransition;
 import android.annotation.SuppressLint;
-import android.app.Activity;
-import android.content.ComponentName;
-import android.content.Context;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.graphics.Point;
-import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.IBinder;
-import android.os.RemoteException;
 import android.preference.PreferenceManager;
-import android.support.annotation.Nullable;
-import android.support.design.widget.Snackbar;
-import android.support.v4.view.GestureDetectorCompat;
-import android.support.v7.app.ActionBar;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Display;
-import android.view.GestureDetector;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
-import android.widget.RelativeLayout;
+import android.view.animation.AccelerateDecelerateInterpolator;
+import android.view.animation.AlphaAnimation;
+import android.view.animation.AnimationSet;
+import android.view.animation.ScaleAnimation;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import com.android.billingclient.api.BillingClient;
-import com.android.billingclient.api.BillingClientStateListener;
-import com.android.billingclient.api.BillingFlowParams;
-import com.android.billingclient.api.Purchase;
-import com.android.billingclient.api.PurchasesUpdatedListener;
-import com.android.vending.billing.IInAppBillingService;
-import com.google.android.gms.ads.AdRequest;
-import com.google.android.gms.ads.AdView;
-import com.google.android.gms.ads.MobileAds;
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.games.Games;
-import com.google.example.games.basegameutils.BaseGameUtils;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import uk.co.pranacreative.timekiller.utils.ExtendableCountDownTimer;
 
@@ -59,116 +27,24 @@ import uk.co.pranacreative.timekiller.utils.ExtendableCountDownTimer;
  * An example full-screen activity that shows and hides the system UI (i.e.
  * status bar and navigation/system bar) with user interaction.
  */
-public class BeatTheClockActivity extends AppCompatActivity implements GestureDetector.OnGestureListener,
-        GestureDetector.OnDoubleTapListener,
-        GoogleApiClient.ConnectionCallbacks,
-        GoogleApiClient.OnConnectionFailedListener,
-        PurchasesUpdatedListener {
+public class BeatTheClockActivity extends TimeKillerActivity {
 
     private static final String TAG = BeatTheClockActivity.class.getSimpleName();
 
-    // Games API constants
-    // Achievement IDs
-    private static final int REQUEST_ACHIEVEMENTS = 123; // An arbitrary integer used as the request code
-    // Leaderboard IDs
-    private static final int REQUEST_LEADERBOARD = 124; // An arbitrary integer used as the request code
+    // Preferences
+    private static final String HIGHSCORE_BEAT_THE_CLOCK = "HS_BTC";
 
-    //Preferences
-    private static final String COUNT_STR = "COUNT";
-
-    // AdMobs constants
-    private static final String ADMOBS_APP_ID = "ca-app-pub-6355028338567451~1344025701";
-    private static final int RC_BILLING_REMOVE_ADS = 1001;
-    // Background colours
-    private static final int[] MATERIAL_COLOURS_WHITE_TEXT = {0xFFF44336, 0xFFE91E63, 0xFF9C27B0,
-            0xFF673AB7, 0xFF3F51B5, 0xFF009688, 0xFF795548, 0xFF795548, 0xFF607D8B};
-    private static final int[] MATERIAL_COLOURS_BLACK_TEXT = {0xFF2196F3, 0xFF03A9F4, 0xFF00BCD4,
-            0xFF4CAF50, 0xFF8BC34A, 0xFFCDDC39, 0xFFFFEB3B, 0xFFFFC107, 0xFFFF9800, 0xFFFF5722, 0xFF9E9E9E};
-    private static final int MATERIAL_COLOUR_WHITE = 0xFFFFFFFF;
-    private static final int MATERIAL_COLOUR_BLACK = 0xFF000000;
-    /**
-     * Some older devices needs a small delay between UI widget updates
-     * and a change of the status and navigation bar.
-     */
-    private static final int UI_ANIMATION_DELAY = 300;
-    private static final int RC_SIGN_IN = 9001;
-    private final static long START_TIME_LEFT = 5000;
-    private final static long START_MILLIS_TO_ADD = 500;
-    private final Handler mHideHandler = new Handler();
-    private final Runnable mShowPart2Runnable = new Runnable() {
-        @Override
-        public void run() {
-            // Delayed display of UI elements
-            ActionBar actionBar = getSupportActionBar();
-            if (actionBar != null) {
-                actionBar.show();
-            }
-        }
-    };
-    // In-app Billing
-    IInAppBillingService mService;
-    private BillingClient mBillingClient;
-    private boolean mIsServiceConnected;
-    private int mBillingClientResponseCode;
-    // Google API
-    private GoogleApiClient mGoogleApiClient;
-    private boolean mResolvingConnectionFailure = false;
-    private boolean mAutoStartSignInFlow = true;
-    private boolean mSignInClicked = false;
-    // Logic Variables
-    private GestureDetectorCompat mDetector;
-    private long count_all_time;
-    private long count_beat_the_clock;
-    private Toast debugToast;
-    private TextView tvCount;
-    private final Runnable mHidePart2Runnable = new Runnable() {
-        @SuppressLint("InlinedApi")
-        @Override
-        public void run() {
-            // Delayed removal of status and navigation bar
-
-            // Note that some of these constants are new as of API 16 (Jelly Bean)
-            // and API 19 (KitKat). It is safe to use them, as they are inlined
-            // at compile-time and do nothing on earlier devices.
-            tvCount.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE
-                    | View.SYSTEM_UI_FLAG_FULLSCREEN
-                    | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                    | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                    | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                    | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
-        }
-    };
+    private long countBeatTheClock;
+    private long highscoreBeatTheClock;
     private TextView tvTimeLeft;
+    private TextView tvHighScore;
+    private TextView tvAddedTime;
+    private long START_TIME_LEFT = 5000;
+    private long START_MILLIS_TO_ADD = 1000;
     private ExtendableCountDownTimer timerTimeLeft;
-    private Context context;
-    private RelativeLayout rlActivity;
-    private Menu menuTimerKiller;
-    private boolean mVisible;
-    private final Runnable mHideRunnable = new Runnable() {
-        @Override
-        public void run() {
-            hide();
-        }
-    };
-    // Timer for checking how long to stay on the a number
-    private Timer currentNumberTimer;
-    private Toast toastNoGoogleSignIn;
-    private Activity activity;
-    private AdView mAdView;
 
-    ServiceConnection mServiceConn = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName name, IBinder service) {
-            mService = IInAppBillingService.Stub.asInterface(service);
-            Log.d("TEST", "mService ready to go!");
-            checkOwnedItems();
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName name) {
-            mService = null;
-        }
-    };
+    private float tvCountX;
+    private float tvCountY;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -183,106 +59,42 @@ public class BeatTheClockActivity extends AppCompatActivity implements GestureDe
         tvCount = findViewById(R.id.tv_count);
         rlActivity = findViewById(R.id.rl_activity);
         tvTimeLeft = findViewById(R.id.tv_time_left);
+        tvHighScore = findViewById(R.id.tv_highscore);
+        tvAddedTime = findViewById(R.id.tv_added_time);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            rlActivity.getLayoutTransition()
-                    .enableTransitionType(LayoutTransition.CHANGING);
-        }
+        tvCountX = tvCount.getX();
+        tvCountY = tvCount.getY();
+
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        highscoreBeatTheClock = prefs.getLong(HIGHSCORE_BEAT_THE_CLOCK, 0);
+        updateHighScore(highscoreBeatTheClock);
+
+        tvAddedTime.setText(String.format("+ %d ms", START_MILLIS_TO_ADD));
 
         // Set up the user interaction to manually show or hide the system UI.
         tvCount.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 // Start timer if not running
-                if (count_beat_the_clock == 0) {
+                if (countBeatTheClock == 0) {
                     timerTimeLeft.start();
+                } else {
+                    addTime();
                 }
                 hide();
-                addTime();
                 countUp();
                 relocateView(view);
                 changeBackgroundColour();
                 resetCurrentNumberTimer();
+                updateHighScore(countBeatTheClock);
 
-                tvCount.setText(String.valueOf(count_beat_the_clock));
+                tvCount.setText(String.valueOf(countBeatTheClock));
             }
         });
 
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-
-        // Manage older versions where it used to be a int value instead of a long
-        try {
-            prefs.getLong(COUNT_STR, -1);
-        } catch (ClassCastException e) {
-            count_all_time = prefs.getInt(COUNT_STR, -1);
-            prefs.edit().putLong(COUNT_STR, count_all_time).apply();
-        }
-        count_all_time = prefs.getLong(COUNT_STR, -1);
-
         resetScene();
 
-        mDetector = new GestureDetectorCompat(this, this);
-        mDetector.setOnDoubleTapListener(this);
-
-        // Create the Google Api Client with access to the Play Games services
-        mGoogleApiClient = new GoogleApiClient.Builder(this)
-                .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
-                .addApi(Games.API).addScope(Games.SCOPE_GAMES)
-                // add other APIs and scopes here as needed
-                .build();
-
-        if (!prefs.getBoolean(getString(R.string.inapp_remove_ads_id), false)) {
-            // Ads have not been removed
-            // Initialise MobileAds for use
-            MobileAds.initialize(this, ADMOBS_APP_ID);
-
-            mAdView = findViewById(R.id.adView);
-            AdRequest adRequest = new AdRequest.Builder().build();
-            mAdView.loadAd(adRequest);
-        }
-
-        // Connect to Google Play Billing
-        Intent serviceIntent =
-                new Intent("com.android.vending.billing.InAppBillingService.BIND");
-        serviceIntent.setPackage("com.android.vending");
-        bindService(serviceIntent, mServiceConn, Context.BIND_AUTO_CREATE);
-        mBillingClient = BillingClient.newBuilder(this).setListener(this).build();
-    }
-
-    @Override
-    protected void onPostCreate(Bundle savedInstanceState) {
-        super.onPostCreate(savedInstanceState);
-
-        // Trigger the initial hide() shortly after the activity has been
-        // created, to briefly hint to the user that UI controls
-        // are available.
-        delayedHide(100);
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-
-        if (mGoogleApiClient != null) {
-            mGoogleApiClient.connect();
-        }
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        resetCurrentNumberTimer();
-        checkOwnedItems();
-    }
-
-    @Override
-    protected void onPause() {
-
-        if (currentNumberTimer != null) {
-            currentNumberTimer.cancel();
-        }
-        super.onPause();
+        setUpEnvironment();
     }
 
     @Override
@@ -291,18 +103,8 @@ public class BeatTheClockActivity extends AppCompatActivity implements GestureDe
 
         if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
             Games.Leaderboards.submitScore(mGoogleApiClient, getString(R.string.leaderboard_all_time), count_all_time);
-            Games.Leaderboards.submitScore(mGoogleApiClient, getString(R.string.leaderboard_beat_the_clock), count_beat_the_clock);
+            Games.Leaderboards.submitScore(mGoogleApiClient, getString(R.string.leaderboard_beat_the_clock), countBeatTheClock);
             mGoogleApiClient.disconnect();
-        } else {
-            notifyNoGoogleSignIn();
-        }
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        if (mServiceConn != null) {
-            unbindService(mServiceConn);
         }
     }
 
@@ -337,37 +139,17 @@ public class BeatTheClockActivity extends AppCompatActivity implements GestureDe
             case R.id.menu_modes_classic:
                 Intent startIntent = new Intent(context, TimeKillerActivity.class);
                 context.startActivity(startIntent);
-            case R.id.menu_sign_in:
-                signInClicked();
-                return true;
-            case R.id.menu_sign_out:
-                signOutclicked();
-                return true;
-            case R.id.menu_achievements:
-                if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
-                    // Update any potentially missed achievements
-                    checkCountAchievements();
-                    // Show achievements
-                    startActivityForResult(Games.Achievements.getAchievementsIntent(mGoogleApiClient),
-                            REQUEST_ACHIEVEMENTS);
-                } else {
-                    notifyNoGoogleSignIn();
-                }
                 return true;
             case R.id.menu_leaderboard:
-
                 if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
                     // Submit scores before checking the leaderboard
                     Games.Leaderboards.submitScore(mGoogleApiClient, getString(R.string.leaderboard_all_time), count_all_time);
-                    Games.Leaderboards.submitScore(mGoogleApiClient, getString(R.string.leaderboard_beat_the_clock), count_beat_the_clock);
+                    Games.Leaderboards.submitScore(mGoogleApiClient, getString(R.string.leaderboard_beat_the_clock), countBeatTheClock);
                     startActivityForResult(Games.Leaderboards.getLeaderboardIntent(mGoogleApiClient,
                             getString(R.string.leaderboard_beat_the_clock)), REQUEST_LEADERBOARD);
                 } else {
                     notifyNoGoogleSignIn();
                 }
-                return true;
-            case R.id.menu_remove_ads:
-                removeAds();
                 return true;
         }
         return false;
@@ -378,21 +160,23 @@ public class BeatTheClockActivity extends AppCompatActivity implements GestureDe
         if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
             // Submit scores before resetting
             Games.Leaderboards.submitScore(mGoogleApiClient, getString(R.string.leaderboard_all_time), count_all_time);
-            Games.Leaderboards.submitScore(mGoogleApiClient, getString(R.string.leaderboard_beat_the_clock), count_beat_the_clock);
+            Games.Leaderboards.submitScore(mGoogleApiClient, getString(R.string.leaderboard_beat_the_clock), countBeatTheClock);
         }
         // Unlock achievements before resetting
         unlockCountAchievements();
 
-        // Reset Beat the Clock count to 0
-        count_beat_the_clock = 0;
+        // Reset Beat the Clock count_all_time to 0
+        countBeatTheClock = 0;
 
         // Reset Text
         tvCount.setText(R.string.start);
+        updateTimeLeftView(START_TIME_LEFT);
 
-        // Recenter TextView in the middle of layout
-        RelativeLayout.LayoutParams lp = (RelativeLayout.LayoutParams) tvCount.getLayoutParams();
-        lp.addRule(RelativeLayout.CENTER_IN_PARENT);
-        tvCount.setLayoutParams(lp);
+        tvCount.animate()
+                .translationY(tvCountY)
+                .translationX(tvCountX)
+                .setDuration(1000)
+                .start();
 
         /*  Set up timer to run for default time and update every 239ms
             239 ms will make sure the millis second units change every time, making it look like
@@ -401,6 +185,7 @@ public class BeatTheClockActivity extends AppCompatActivity implements GestureDe
             @Override
             public void onTimerTick(long l) {
                 updateTimeLeftView(l);
+                Log.d(TAG, ("Timer Left Ticked: " + l + "ms left"));
             }
 
             @Override
@@ -408,6 +193,7 @@ public class BeatTheClockActivity extends AppCompatActivity implements GestureDe
                 resetScene();
             }
         };
+        Log.d(TAG, "Reset Scene");
 
     }
 
@@ -424,27 +210,49 @@ public class BeatTheClockActivity extends AppCompatActivity implements GestureDe
             // At least 1 minute left
             mins = secs / 60;
             secs = secs % 60;
-            tvCount.setText(String.format("%02d:%02d.%03d", mins, secs, millis));
+            tvTimeLeft.setText(String.format("%02d:%02d.%03d secs", mins, secs, millis));
         } else {
             // Less than 1 minutes left
-            tvCount.setText(String.format("%02d.%03d", secs, millis));
+            tvTimeLeft.setText(String.format("%02d.%03d secs", secs, millis));
+        }
+        Log.d(TAG, "Updated time");
+    }
+
+    private void updateHighScore(long newHighscore) {
+        if (newHighscore >= highscoreBeatTheClock) {
+            tvHighScore.setText(String.format(getString(R.string.highscore), newHighscore));
+
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+            prefs.edit().putLong(HIGHSCORE_BEAT_THE_CLOCK, newHighscore).apply();
+
+            highscoreBeatTheClock = newHighscore;
         }
     }
 
     private void addTime() {
-        // ALways change same amount of time
+        // Always change same amount of time
         timerTimeLeft.addMillis(START_MILLIS_TO_ADD);
+
+        AnimationSet as = new AnimationSet(true);
+        as.setInterpolator(new AccelerateDecelerateInterpolator());
+        // Show
+        ScaleAnimation scaleAnimation = new ScaleAnimation(1, 2, 1, 2);
+        scaleAnimation.setDuration(START_MILLIS_TO_ADD / 3);
+        as.addAnimation(scaleAnimation);
+
+        AlphaAnimation alphaAnimation = new AlphaAnimation(0, 1);
+        alphaAnimation.setDuration(scaleAnimation.getDuration());
+        as.addAnimation(alphaAnimation);
+
+        tvAddedTime.startAnimation(as);
     }
 
-    private void countUp() {
-        count_all_time++;
-        count_beat_the_clock++;
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        prefs.edit().putLong(COUNT_STR, count_all_time).apply();
-        unlockCountAchievements();
+    protected void countUp() {
+        countBeatTheClock++;
+        super.countUp();
     }
 
-    private void relocateView(View view) {
+    protected void relocateView(View view) {
         Display display = getWindowManager().getDefaultDisplay();
         Point size = new Point();
         display.getSize(size);
@@ -459,442 +267,45 @@ public class BeatTheClockActivity extends AppCompatActivity implements GestureDe
         float x = (float) (Math.random() * (width - view.getWidth()));
         float y = (float) (Math.random() * (height - view.getHeight()) + tvTimeLeft.getHeight());
 
-        view.setX(x);
-        view.setY(y);
+        view.animate()
+                .translationXBy(x - view.getX())
+                .translationYBy(y - view.getY())
+                .setDuration(200)
+                .start();
     }
 
-    private void changeBackgroundColour() {
-        // Black or white text
-        int textColour;
-        int[] backgroundColours;
-        if (Math.random() >= 0.5) {
-            // Black Text
-            textColour = MATERIAL_COLOUR_BLACK;
-            backgroundColours = MATERIAL_COLOURS_BLACK_TEXT;
-        } else {
-            // White Text
-            textColour = MATERIAL_COLOUR_WHITE;
-            backgroundColours = MATERIAL_COLOURS_WHITE_TEXT;
-        }
-
-        tvCount.setTextColor(textColour);
-        int index = (int) Math.round(Math.random() * (backgroundColours.length - 1));
-        rlActivity.setBackgroundColor(backgroundColours[index]);
-    }
-
-    private void resetCurrentNumberTimer() {
-        if (currentNumberTimer != null) {
-            currentNumberTimer.cancel();
-        }
-
-        currentNumberTimer = new Timer();
-
-        currentNumberTimer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                unlockEnjoyAchievement();
-            }
-        }, 60 * 1000); // 1 minutes delay
-    }
-
-    private void removeAds() {
-
-        executeServiceRequest(new Runnable() {
-            @Override
-            public void run() {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        BillingFlowParams flowParams = BillingFlowParams.newBuilder()
-                                .setSku(getString(R.string.inapp_remove_ads_id))
-                                .setType(BillingClient.SkuType.INAPP)
-                                .build();
-                        int responseCode = mBillingClient.launchBillingFlow(activity, flowParams);
-                    }
-                });
-            }
-        });
-    }
-
-    public void startServiceConnection(final Runnable executeOnSuccess) {
-        mBillingClient.startConnection(new BillingClientStateListener() {
-            @Override
-            public void onBillingSetupFinished(@BillingClient.BillingResponse int billingResponseCode) {
-                Log.d(TAG, "Setup finished. Response code: " + billingResponseCode);
-
-                if (billingResponseCode == BillingClient.BillingResponse.OK) {
-                    mIsServiceConnected = true;
-                    if (executeOnSuccess != null) {
-                        executeOnSuccess.run();
-                    }
-                }
-                mBillingClientResponseCode = billingResponseCode;
-            }
-
-            @Override
-            public void onBillingServiceDisconnected() {
-                mIsServiceConnected = false;
-            }
-        });
-    }
-
-    private void executeServiceRequest(Runnable runnable) {
-        if (mIsServiceConnected) {
-            runnable.run();
-        } else {
-            // If billing service was disconnected, we try to reconnect 1 time.
-            // (feel free to introduce your retry policy here).
-            startServiceConnection(runnable);
-        }
-    }
-
-    private void toggle() {
-        if (mVisible) {
-            hide();
-        } else {
-            show();
-        }
-    }
-
-    private void hide() {
-        // Hide UI first
-        ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            actionBar.hide();
-        }
-        mVisible = false;
-
-        // Schedule a runnable to remove the status and navigation bar after a delay
-        mHideHandler.removeCallbacks(mShowPart2Runnable);
-        mHideHandler.postDelayed(mHidePart2Runnable, UI_ANIMATION_DELAY);
-    }
-
-    @SuppressLint("InlinedApi")
-    private void show() {
-        // Show the system bar
-        tvCount.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
-        mVisible = true;
-
-        // Schedule a runnable to display UI elements after a delay
-        mHideHandler.removeCallbacks(mHidePart2Runnable);
-        mHideHandler.postDelayed(mShowPart2Runnable, UI_ANIMATION_DELAY);
-    }
-
-    /**
-     * Schedules a call to hide() in [delay] milliseconds, canceling any
-     * previously scheduled calls.
-     */
-    private void delayedHide(int delayMillis) {
-        mHideHandler.removeCallbacks(mHideRunnable);
-        mHideHandler.postDelayed(mHideRunnable, delayMillis);
-    }
-
-    private void notifyNoGoogleSignIn() {
-        if (toastNoGoogleSignIn != null) {
-            toastNoGoogleSignIn.cancel();
-        }
-        toastNoGoogleSignIn = Toast.makeText(this, R.string.note_no_google_sign_in, Toast.LENGTH_SHORT);
-        toastNoGoogleSignIn.show();
-    }
-
-    // Call when the sign-in button is clicked
-    private void signInClicked() {
-        mSignInClicked = true;
-        if (mGoogleApiClient != null) {
-            mGoogleApiClient.connect();
-        }
-    }
-
-    // Call when the sign-out button is clicked
-    private void signOutclicked() {
-        mSignInClicked = false;
-        mAutoStartSignInFlow = false;
-
-        Games.signOut(mGoogleApiClient);
-
-        MenuItem signIn = menuTimerKiller.findItem(R.id.menu_sign_in);
-        MenuItem signOut = menuTimerKiller.findItem(R.id.menu_sign_out);
-
-        signIn.setVisible(true);
-        signOut.setVisible(false);
-    }
-
-    private void unlockEnjoyAchievement() {
-        if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
-            Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_enjoy_view_id));
-        }
-    }
-
-    private void unlockCountAchievements() {
+    protected void unlockCountAchievements() {
         // Achievements from clicking
+        super.unlockCountAchievements();
 
         if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
-
-            // All time
-            if (count_all_time == 100) {
-                Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_100_clicks_id));
-            } else if (count_all_time == 1000) {
-                Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_1000_clicks_id));
-            } else if (count_all_time == 10000) {
-                Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_10k_clicks_id));
-            } else if (count_all_time == 100000) {
-                Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_100k_clicks_id));
-            } else if (count_all_time == 1000000) {
-                Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_1m_clicks_id));
-            }
-
             // Beat the clock
-            if (count_beat_the_clock == 100) {
+            if (countBeatTheClock == 100) {
                 Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_ftt_100_clicks_id));
-            } else if (count_beat_the_clock == 1000) {
+            } else if (countBeatTheClock == 1000) {
                 Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_ftt_1000_clicks_id));
-            } else if (count_beat_the_clock == 10000) {
-                Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_ftt_10k_clicks_id));
-            }
-        }
-    }
-
-    private void checkCountAchievements() {
-        // Achievements from clicking
-
-        if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
-
-            // All time
-            if (count_all_time >= 100) {
-                Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_100_clicks_id));
-            }
-            if (count_all_time >= 1000) {
-                Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_1000_clicks_id));
-            }
-            if (count_all_time >= 10000) {
-                Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_10k_clicks_id));
-            }
-            if (count_all_time >= 100000) {
-                Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_100k_clicks_id));
-            }
-            if (count_all_time >= 1000000) {
-                Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_1m_clicks_id));
-            }
-
-            // Beat the clock
-            if (count_beat_the_clock >= 100) {
-                Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_ftt_100_clicks_id));
-            }
-            if (count_beat_the_clock >= 1000) {
-                Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_ftt_1000_clicks_id));
-            }
-            if (count_beat_the_clock >= 10000) {
+            } else if (countBeatTheClock == 10000) {
                 Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_ftt_10k_clicks_id));
             }
         }
     }
 
     @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        if (this.mDetector != null) return this.mDetector.onTouchEvent(event);
-        return super.onTouchEvent(event);
-    }
+    protected void checkCountAchievements() {
+        // Achievements from clicking
 
-    @Override
-    public boolean onDoubleTap(MotionEvent e) {
-        toggle();
-        return true;
-    }
-
-    @Override
-    public boolean onSingleTapConfirmed(MotionEvent e) {
-        return false;
-    }
-
-    @Override
-    public boolean onDoubleTapEvent(MotionEvent e) {
-        return false;
-    }
-
-    @Override
-    public boolean onDown(MotionEvent e) {
-        return false;
-    }
-
-    @Override
-    public void onShowPress(MotionEvent e) {
-
-    }
-
-    @Override
-    public boolean onSingleTapUp(MotionEvent e) {
-        return false;
-    }
-
-    @Override
-    public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
-        return false;
-    }
-
-    @Override
-    public void onLongPress(MotionEvent e) {
-
-    }
-
-    @Override
-    public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-        return false;
-    }
-
-    @Override
-    public void onConnected(@Nullable Bundle bundle) {
-        // The player is signed in. Hide the sign-in button and allow the
-        // player to proceed.
-        MenuItem signIn = menuTimerKiller.findItem(R.id.menu_sign_in);
-        MenuItem signOut = menuTimerKiller.findItem(R.id.menu_sign_out);
-
-        mAutoStartSignInFlow = true;
-
-        signIn.setVisible(false);
-        signOut.setVisible(true);
-
-    }
-
-    @Override
-    public void onConnectionFailed(ConnectionResult connectionResult) {
-        if (mResolvingConnectionFailure) {
-            // already resolving
-            return;
-        }
-
-        // if the sign-in button was clicked or if auto sign-in is enabled,
-        // launch the sign-in flow
-        if (mSignInClicked || mAutoStartSignInFlow) {
-            mAutoStartSignInFlow = false;
-            mSignInClicked = false;
-            mResolvingConnectionFailure = true;
-
-            // Attempt to resolve the connection failure using BaseGameUtils.
-            // The R.string.signin_other_error value should reference a generic
-            // error string in your strings.xml file, such as "There was
-            // an issue with sign-in, please try again later."
-            if (!BaseGameUtils.resolveConnectionFailure(this,
-                    mGoogleApiClient, connectionResult,
-                    RC_SIGN_IN, R.string.sign_in_other_error)) {
-                mResolvingConnectionFailure = false;
+        super.checkCountAchievements();
+        if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
+            // Beat the clock
+            if (countBeatTheClock >= 100) {
+                Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_ftt_100_clicks_id));
             }
-        }
-
-        // Put code here to display the sign-in button
-        MenuItem signIn = menuTimerKiller.findItem(R.id.menu_sign_in);
-        MenuItem signOut = menuTimerKiller.findItem(R.id.menu_sign_out);
-        signIn.setVisible(true);
-        signOut.setVisible(false);
-    }
-
-    @Override
-    public void onConnectionSuspended(int i) {
-        // Attempt to reconnect
-        mGoogleApiClient.connect();
-    }
-
-    protected void onActivityResult(int requestCode, int resultCode,
-                                    Intent intent) {
-        if (requestCode == RC_SIGN_IN) {
-            mSignInClicked = false;
-            mResolvingConnectionFailure = false;
-            if (resultCode == RESULT_OK) {
-                mGoogleApiClient.connect();
-            } else {
-                // Bring up an error dialog to alert the user that sign-in
-                // failed. The R.string.signin_failure should reference an error
-                // string in your strings.xml file that tells the user they
-                // could not be signed in, such as "Unable to sign in."
-                BaseGameUtils.showActivityResultError(this,
-                        requestCode, resultCode, R.string.signin_failure);
+            if (countBeatTheClock >= 1000) {
+                Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_ftt_1000_clicks_id));
             }
-        }
-    }
-
-    @Override
-    public void onPurchasesUpdated(final int responseCode, @Nullable List<Purchase> purchases) {
-        if ((responseCode == BillingClient.BillingResponse.OK ||
-                responseCode == BillingClient.BillingResponse.ITEM_ALREADY_OWNED)
-                && purchases != null) {
-            for (Purchase purchase : purchases) {
-                if (purchase.getSku().equals(getString(R.string.inapp_remove_ads_id))) {
-                    if (mAdView != null) {
-                        mAdView.setVisibility(View.INVISIBLE);
-                    }
-                    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-                    prefs.edit().putBoolean(getString(R.string.inapp_remove_ads_id), true).apply();
-                    // Hide Ads
-                    MenuItem removeAds = menuTimerKiller.findItem(R.id.menu_remove_ads);
-
-                    if (removeAds != null) {
-                        removeAds.setVisible(false);
-                    }
-                }
+            if (countBeatTheClock >= 10000) {
+                Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_ftt_10k_clicks_id));
             }
-        } else if (responseCode == BillingClient.BillingResponse.USER_CANCELED) {
-            // Handle an error caused by a user cancelling the purchase flow.
-        } else if (responseCode == BillingClient.BillingResponse.SERVICE_UNAVAILABLE) {
-            // BILLING_RESPONSE_RESULT_SERVICE_UNAVAILABLE - Network connection is down
-            Toast.makeText(context, R.string.no_network, Toast.LENGTH_SHORT).show();
-        } else {
-            Snackbar.make(tvCount, R.string.note_sorry_bug, Snackbar.LENGTH_SHORT)
-                    .setAction(R.string.report_issue, new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            // Send email to developer
-                            Intent intent = new Intent(Intent.ACTION_SENDTO, Uri.fromParts(
-                                    "mailto", "meezpower@gmail.com", null));
-                            intent.setType("text/plain");
-                            intent.putExtra(Intent.EXTRA_EMAIL, "meezpower@egmail.com");
-                            intent.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.error_report_subject_billing));
-                            intent.putExtra(Intent.EXTRA_TEXT,
-                                    getString(R.string.error_report_body_billing) +
-                                            responseCode + ".");
-                            startActivity(Intent.createChooser(intent, "Send Email"));
-                        }
-                    }).show();
-        }
-    }
-
-    private void checkOwnedItems() {
-        try {
-            Bundle ownedItems = null;
-            if (mService != null) {
-                ownedItems = mService.getPurchases(3, getPackageName(), "inapp", null);
-
-                if (ownedItems.getInt("RESPONSE_CODE") == 0) {
-                    ArrayList<String> ownedSkus = ownedItems.getStringArrayList("INAPP_PURCHASE_ITEM_LIST");
-
-                    if (ownedSkus != null && ownedSkus.size() > 0) {
-                        for (String sku : ownedSkus) {
-                            if (sku.equals(getString(R.string.inapp_remove_ads_id))) {
-                                // Remove ads
-                                if (mAdView != null) {
-                                    mAdView.setVisibility(View.INVISIBLE);
-                                }
-                                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-                                prefs.edit().putBoolean(getString(R.string.inapp_remove_ads_id), true).apply();
-                                // Hide Ads
-                                MenuItem removeAds = null;
-                                if (menuTimerKiller != null) {
-                                    removeAds = menuTimerKiller.findItem(R.id.menu_remove_ads);
-                                }
-
-                                if (removeAds != null) {
-                                    removeAds.setVisible(false);
-                                }
-                            }
-                        }
-                    }
-                }
-            } else {
-                if (ownedItems != null) {
-                    Log.e(TAG, "ERROR - checkOwnedItems: RESPONSE CODE = " + ownedItems.getInt("RESPONSE_CODE"));
-                }
-            }
-        } catch (RemoteException e) {
-            e.printStackTrace();
         }
     }
 }

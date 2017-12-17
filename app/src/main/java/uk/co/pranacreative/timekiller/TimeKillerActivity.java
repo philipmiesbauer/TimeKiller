@@ -67,32 +67,32 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
 
     // Games API constants
     // Achievement IDs
-    private static final int REQUEST_ACHIEVEMENTS = 123; // An arbitrary integer used as the request code
+    protected static final int REQUEST_ACHIEVEMENTS = 123; // An arbitrary integer used as the request code
     // Leaderboard IDs
-    private static final int REQUEST_LEADERBOARD = 124; // An arbitrary integer used as the request code
+    protected static final int REQUEST_LEADERBOARD = 124; // An arbitrary integer used as the request code
 
     //Preferences
-    private static final String COUNT_STR = "COUNT";
-    private static final String DOUBLE_TAP_STR = "DOUBLE_TAP";
+    protected static final String COUNT_STR = "COUNT";
+    protected static final String DOUBLE_TAP_STR = "DOUBLE_TAP";
 
     // AdMobs constants
-    private static final String ADMOBS_APP_ID = "ca-app-pub-6355028338567451~1344025701";
-    private static final int RC_BILLING_REMOVE_ADS = 1001;
+    protected static final String ADMOBS_APP_ID = "ca-app-pub-6355028338567451~1344025701";
+    protected static final int RC_BILLING_REMOVE_ADS = 1001;
     // Background colours
-    private static final int[] MATERIAL_COLOURS_WHITE_TEXT = {0xFFF44336, 0xFFE91E63, 0xFF9C27B0,
+    protected static final int[] MATERIAL_COLOURS_WHITE_TEXT = {0xFFF44336, 0xFFE91E63, 0xFF9C27B0,
             0xFF673AB7, 0xFF3F51B5, 0xFF009688, 0xFF795548, 0xFF795548, 0xFF607D8B};
-    private static final int[] MATERIAL_COLOURS_BLACK_TEXT = {0xFF2196F3, 0xFF03A9F4, 0xFF00BCD4,
+    protected static final int[] MATERIAL_COLOURS_BLACK_TEXT = {0xFF2196F3, 0xFF03A9F4, 0xFF00BCD4,
             0xFF4CAF50, 0xFF8BC34A, 0xFFCDDC39, 0xFFFFEB3B, 0xFFFFC107, 0xFFFF9800, 0xFFFF5722, 0xFF9E9E9E};
-    private static final int MATERIAL_COLOUR_WHITE = 0xFFFFFFFF;
-    private static final int MATERIAL_COLOUR_BLACK = 0xFF000000;
+    protected static final int MATERIAL_COLOUR_WHITE = 0xFFFFFFFF;
+    protected static final int MATERIAL_COLOUR_BLACK = 0xFF000000;
     /**
      * Some older devices needs a small delay between UI widget updates
      * and a change of the status and navigation bar.
      */
-    private static final int UI_ANIMATION_DELAY = 300;
-    private static final int RC_SIGN_IN = 9001;
-    private final Handler mHideHandler = new Handler();
-    private final Runnable mShowPart2Runnable = new Runnable() {
+    protected static final int UI_ANIMATION_DELAY = 300;
+    protected static final int RC_SIGN_IN = 9001;
+    protected final Handler mHideHandler = new Handler();
+    protected final Runnable mShowPart2Runnable = new Runnable() {
         @Override
         public void run() {
             // Delayed display of UI elements
@@ -104,20 +104,20 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
     };
     // In-app Billing
     IInAppBillingService mService;
-    private BillingClient mBillingClient;
-    private boolean mIsServiceConnected;
-    private int mBillingClientResponseCode;
+    protected BillingClient mBillingClient;
+    protected boolean mIsServiceConnected;
+    protected int mBillingClientResponseCode;
     // Google API
-    private GoogleApiClient mGoogleApiClient;
-    private boolean mResolvingConnectionFailure = false;
-    private boolean mAutoStartSignInFlow = true;
-    private boolean mSignInClicked = false;
+    protected GoogleApiClient mGoogleApiClient;
+    protected boolean mResolvingConnectionFailure = false;
+    protected boolean mAutoStartSignInFlow = false;
+    protected boolean mSignInClicked = false;
     // Logic Variables
-    private GestureDetectorCompat mDetector;
-    private long count;
-    private Toast debugToast;
-    private TextView tvCount;
-    private final Runnable mHidePart2Runnable = new Runnable() {
+    protected GestureDetectorCompat mDetector;
+    protected long count_all_time;
+    protected Toast debugToast;
+    protected TextView tvCount;
+    protected final Runnable mHidePart2Runnable = new Runnable() {
         @SuppressLint("InlinedApi")
         @Override
         public void run() {
@@ -134,21 +134,21 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
                     | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
         }
     };
-    private Context context;
-    private RelativeLayout rlActivity;
-    private Menu menuTimerKiller;
-    private boolean mVisible;
-    private final Runnable mHideRunnable = new Runnable() {
+    protected Context context;
+    protected RelativeLayout rlActivity;
+    protected Menu menuTimerKiller;
+    protected boolean mVisible;
+    protected final Runnable mHideRunnable = new Runnable() {
         @Override
         public void run() {
             hide();
         }
     };
     // Timer for checking how long to stay on the a number
-    private Timer currentNumberTimer;
-    private Toast toastNoGoogleSignIn;
-    private Activity activity;
-    private AdView mAdView;
+    protected Timer currentNumberTimer;
+    protected Toast toastNoGoogleSignIn;
+    protected Activity activity;
+    protected AdView mAdView;
     ServiceConnection mServiceConn = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
@@ -176,12 +176,6 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
         tvCount = findViewById(R.id.tv_count);
         rlActivity = findViewById(R.id.rl_activity);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            rlActivity.getLayoutTransition()
-                    .enableTransitionType(LayoutTransition.CHANGING);
-        }
-
-
         // Set up the user interaction to manually show or hide the system UI.
         tvCount.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -192,66 +186,17 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
                 changeBackgroundColour();
                 resetCurrentNumberTimer();
 
-                tvCount.setText(String.valueOf(count));
+                tvCount.setText(String.valueOf(count_all_time));
             }
         });
 
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-
-        // Manage older versions where it used to be a int value instead of a long
-        try {
-            prefs.getLong(COUNT_STR, -1);
-        } catch (ClassCastException e) {
-            count = prefs.getInt(COUNT_STR, -1);
-            prefs.edit().putLong(COUNT_STR, count).apply();
-        }
-        count = prefs.getLong(COUNT_STR, -1);
+        setUpEnvironment();
 
         // Set value if a value greater than 0 exists
-        if (count > 0) {
-            tvCount.setText(String.valueOf(count));
+        if (count_all_time > 0) {
+            tvCount.setText(String.valueOf(count_all_time));
         }
 
-
-        mDetector = new GestureDetectorCompat(this, this);
-        mDetector.setOnDoubleTapListener(this);
-
-        // DoubleTap instructions
-        if (!prefs.getBoolean(DOUBLE_TAP_STR, false)) {
-            Snackbar.make(tvCount, R.string.note_double_tap, Snackbar.LENGTH_LONG)
-                    .setAction(R.string.note_got_it, new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-                            prefs.edit().putBoolean(DOUBLE_TAP_STR, true).apply();
-                        }
-                    }).show();
-        }
-
-        // Create the Google Api Client with access to the Play Games services
-        mGoogleApiClient = new GoogleApiClient.Builder(this)
-                .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
-                .addApi(Games.API).addScope(Games.SCOPE_GAMES)
-                // add other APIs and scopes here as needed
-                .build();
-
-        if (!prefs.getBoolean(getString(R.string.inapp_remove_ads_id), false)) {
-            // Ads have not been removed
-            // Initialise MobileAds for use
-            MobileAds.initialize(this, ADMOBS_APP_ID);
-
-            mAdView = findViewById(R.id.adView);
-            AdRequest adRequest = new AdRequest.Builder().build();
-            mAdView.loadAd(adRequest);
-        }
-
-        // Connect to Google Play Billing
-        Intent serviceIntent =
-                new Intent("com.android.vending.billing.InAppBillingService.BIND");
-        serviceIntent.setPackage("com.android.vending");
-        bindService(serviceIntent, mServiceConn, Context.BIND_AUTO_CREATE);
-        mBillingClient = BillingClient.newBuilder(this).setListener(this).build();
     }
 
     @Override
@@ -294,7 +239,7 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
         super.onStop();
 
         if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
-            Games.Leaderboards.submitScore(mGoogleApiClient, getString(R.string.leaderboard_all_time), count);
+            Games.Leaderboards.submitScore(mGoogleApiClient, getString(R.string.leaderboard_all_time), count_all_time);
             mGoogleApiClient.disconnect();
         } else {
             notifyNoGoogleSignIn();
@@ -362,7 +307,7 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
 
                 if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
                     // Submit scores before checking the leasderboard
-                    Games.Leaderboards.submitScore(mGoogleApiClient, getString(R.string.leaderboard_all_time), count);
+                    Games.Leaderboards.submitScore(mGoogleApiClient, getString(R.string.leaderboard_all_time), count_all_time);
                     startActivityForResult(Games.Leaderboards.getLeaderboardIntent(mGoogleApiClient,
                             getString(R.string.leaderboard_all_time)), REQUEST_LEADERBOARD);
                 } else {
@@ -376,14 +321,14 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
         return false;
     }
 
-    private void countUp() {
-        count++;
+    protected void countUp() {
+        count_all_time++;
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        prefs.edit().putLong(COUNT_STR, count).apply();
+        prefs.edit().putLong(COUNT_STR, count_all_time).apply();
         unlockCountAchievements();
     }
 
-    private void relocateView(View view) {
+    protected void relocateView(View view) {
         Display display = getWindowManager().getDefaultDisplay();
         Point size = new Point();
         display.getSize(size);
@@ -398,11 +343,14 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
         float x = (float) (Math.random() * (width - view.getWidth()));
         float y = (float) (Math.random() * (height - view.getHeight()));
 
-        view.setX(x);
-        view.setY(y);
+        view.animate()
+                .translationXBy(x - view.getX())
+                .translationYBy(y - view.getY())
+                .setDuration(200)
+                .start();
     }
 
-    private void changeBackgroundColour() {
+    protected void changeBackgroundColour() {
         // Black or white text
         int textColour;
         int[] backgroundColours;
@@ -421,7 +369,7 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
         rlActivity.setBackgroundColor(backgroundColours[index]);
     }
 
-    private void resetCurrentNumberTimer() {
+    protected void resetCurrentNumberTimer() {
         if (currentNumberTimer != null) {
             currentNumberTimer.cancel();
         }
@@ -436,7 +384,7 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
         }, 60 * 1000); // 1 minutes delay
     }
 
-    private void removeAds() {
+    protected void removeAds() {
 
         executeServiceRequest(new Runnable() {
             @Override
@@ -477,7 +425,7 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
         });
     }
 
-    private void executeServiceRequest(Runnable runnable) {
+    protected void executeServiceRequest(Runnable runnable) {
         if (mIsServiceConnected) {
             runnable.run();
         } else {
@@ -487,7 +435,7 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
         }
     }
 
-    private void toggle() {
+    protected void toggle() {
         if (mVisible) {
             hide();
         } else {
@@ -495,7 +443,7 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
         }
     }
 
-    private void hide() {
+    protected void hide() {
         // Hide UI first
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
@@ -509,7 +457,7 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
     }
 
     @SuppressLint("InlinedApi")
-    private void show() {
+    protected void show() {
         // Show the system bar
         tvCount.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                 | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
@@ -524,12 +472,12 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
      * Schedules a call to hide() in [delay] milliseconds, canceling any
      * previously scheduled calls.
      */
-    private void delayedHide(int delayMillis) {
+    protected void delayedHide(int delayMillis) {
         mHideHandler.removeCallbacks(mHideRunnable);
         mHideHandler.postDelayed(mHideRunnable, delayMillis);
     }
 
-    private void notifyNoGoogleSignIn() {
+    protected void notifyNoGoogleSignIn() {
         if (toastNoGoogleSignIn != null) {
             toastNoGoogleSignIn.cancel();
         }
@@ -538,7 +486,7 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
     }
 
     // Call when the sign-in button is clicked
-    private void signInClicked() {
+    protected void signInClicked() {
         mSignInClicked = true;
         if (mGoogleApiClient != null) {
             mGoogleApiClient.connect();
@@ -546,7 +494,7 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
     }
 
     // Call when the sign-out button is clicked
-    private void signOutclicked() {
+    protected void signOutclicked() {
         mSignInClicked = false;
         mAutoStartSignInFlow = false;
 
@@ -559,49 +507,49 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
         signOut.setVisible(false);
     }
 
-    private void unlockEnjoyAchievement() {
+    protected void unlockEnjoyAchievement() {
         if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
             Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_enjoy_view_id));
         }
     }
 
-    private void unlockCountAchievements() {
+    protected void unlockCountAchievements() {
         // Achievements from clicking
 
         if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
 
-            if (count == 100) {
+            if (count_all_time == 100) {
                 Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_100_clicks_id));
-            } else if (count == 1000) {
+            } else if (count_all_time == 1000) {
                 Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_1000_clicks_id));
-            } else if (count == 10000) {
+            } else if (count_all_time == 10000) {
                 Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_10k_clicks_id));
-            } else if (count == 100000) {
+            } else if (count_all_time == 100000) {
                 Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_100k_clicks_id));
-            } else if (count == 1000000) {
+            } else if (count_all_time == 1000000) {
                 Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_1m_clicks_id));
             }
         }
     }
 
-    private void checkCountAchievements() {
+    protected void checkCountAchievements() {
         // Achievements from clicking
 
         if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
 
-            if (count >= 100) {
+            if (count_all_time >= 100) {
                 Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_100_clicks_id));
             }
-            if (count >= 1000) {
+            if (count_all_time >= 1000) {
                 Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_1000_clicks_id));
             }
-            if (count >= 10000) {
+            if (count_all_time >= 10000) {
                 Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_10k_clicks_id));
             }
-            if (count >= 100000) {
+            if (count_all_time >= 100000) {
                 Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_100k_clicks_id));
             }
-            if (count >= 1000000) {
+            if (count_all_time >= 1000000) {
                 Games.Achievements.unlock(mGoogleApiClient, getString(R.string.achievement_1m_clicks_id));
             }
         }
@@ -711,6 +659,65 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
         mGoogleApiClient.connect();
     }
 
+    protected void setUpEnvironment() {
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+            rlActivity.getLayoutTransition()
+                    .enableTransitionType(LayoutTransition.CHANGING);
+        }
+
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+
+        // Manage older versions where it used to be a int value instead of a long
+        try {
+            prefs.getLong(COUNT_STR, -1);
+        } catch (ClassCastException e) {
+            count_all_time = prefs.getInt(COUNT_STR, -1);
+            prefs.edit().putLong(COUNT_STR, count_all_time).apply();
+        }
+        count_all_time = prefs.getLong(COUNT_STR, -1);
+
+        mDetector = new GestureDetectorCompat(this, this);
+        mDetector.setOnDoubleTapListener(this);
+
+        // DoubleTap instructions
+        if (!prefs.getBoolean(DOUBLE_TAP_STR, false)) {
+            Snackbar.make(tvCount, R.string.note_double_tap, Snackbar.LENGTH_LONG)
+                    .setAction(R.string.note_got_it, new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+                            prefs.edit().putBoolean(DOUBLE_TAP_STR, true).apply();
+                        }
+                    }).show();
+        }
+
+        // Create the Google Api Client with access to the Play Games services
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .addApi(Games.API).addScope(Games.SCOPE_GAMES)
+                // add other APIs and scopes here as needed
+                .build();
+
+        if (!prefs.getBoolean(getString(R.string.inapp_remove_ads_id), false)) {
+            // Ads have not been removed
+            // Initialise MobileAds for use
+            MobileAds.initialize(this, ADMOBS_APP_ID);
+
+            mAdView = findViewById(R.id.adView);
+            AdRequest adRequest = new AdRequest.Builder().build();
+            mAdView.loadAd(adRequest);
+        }
+
+        // Connect to Google Play Billing
+        Intent serviceIntent =
+                new Intent("com.android.vending.billing.InAppBillingService.BIND");
+        serviceIntent.setPackage("com.android.vending");
+        bindService(serviceIntent, mServiceConn, Context.BIND_AUTO_CREATE);
+        mBillingClient = BillingClient.newBuilder(this).setListener(this).build();
+    }
+
     protected void onActivityResult(int requestCode, int resultCode,
                                     Intent intent) {
         if (requestCode == RC_SIGN_IN) {
@@ -774,7 +781,7 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
         }
     }
 
-    private void checkOwnedItems() {
+    protected void checkOwnedItems() {
         try {
             Bundle ownedItems = null;
             if (mService != null) {
