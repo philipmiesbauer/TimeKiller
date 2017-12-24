@@ -128,6 +128,12 @@ public class BeatTheClockActivity extends TimeKillerActivity {
             }
         }
 
+        MenuItem menuItemClassic = findViewById(R.id.menu_modes_classic);
+        MenuItem menuItemBeatTheClock = findViewById(R.id.menu_modes_beat_the_clock);
+
+        menuItemBeatTheClock.setVisible(false);
+        menuItemClassic.setVisible(true);
+
         mGoogleSignInAccount = GoogleSignIn.getLastSignedInAccount(this);
         updateSignInOutUI(mGoogleSignInAccount);
 
@@ -144,7 +150,6 @@ public class BeatTheClockActivity extends TimeKillerActivity {
                 return true;
             case R.id.menu_leaderboard_beat_the_clock:
                 // Submit scores before checking the leaderboard
-
                 mGoogleSignInAccount = GoogleSignIn.getLastSignedInAccount(this);
                 if (mGoogleSignInAccount != null) {
                     Games.getLeaderboardsClient(this, mGoogleSignInAccount)
@@ -164,7 +169,6 @@ public class BeatTheClockActivity extends TimeKillerActivity {
                 }
                 return true;
         }
-        super.onOptionsItemSelected(item);
         return false;
     }
 

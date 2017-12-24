@@ -259,6 +259,13 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
             }
         }
 
+        MenuItem menuItemClassic = findViewById(R.id.menu_modes_classic);
+        MenuItem menuItemBeatTheClock = findViewById(R.id.menu_modes_beat_the_clock);
+
+        menuItemBeatTheClock.setVisible(true);
+        menuItemClassic.setVisible(false);
+
+
         mGoogleSignInAccount = GoogleSignIn.getLastSignedInAccount(this);
         updateSignInOutUI(mGoogleSignInAccount);
 
@@ -272,6 +279,7 @@ public class TimeKillerActivity extends AppCompatActivity implements GestureDete
             case R.id.menu_modes_beat_the_clock:
                 Intent startIntent = new Intent(context, BeatTheClockActivity.class);
                 context.startActivity(startIntent);
+                return true;
             case R.id.menu_sign_in:
                 signInClicked();
                 return true;
