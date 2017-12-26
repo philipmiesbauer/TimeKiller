@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">Waste of Time</string>
 
-    <string name="reset">Reset Count</string>
+    <string name="reset">RESET</string>
     <string name="start">START</string>
 
     <string name="sign_in_other_error">There was an issue with sign-in, please try again later.</string>

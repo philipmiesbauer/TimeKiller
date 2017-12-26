@@ -34,12 +34,12 @@
             <item
                 android:id="@+id/menu_modes_classic"
                 android:title="@string/classic"
-                android:visible="true"
+                android:visible="false"
                 app:showAsAction="never" />
             <item
                 android:id="@+id/menu_modes_beat_the_clock"
                 android:title="@string/beat_the_clock"
-                android:visible="false"
+                android:visible="true"
                 app:showAsAction="never" />
         </menu>
     </item>

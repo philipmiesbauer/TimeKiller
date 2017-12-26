@@ -3,6 +3,7 @@
     package="uk.co.pranacreative.timekiller">
 
     <uses-permission android:name="com.android.vending.BILLING" />
+    <uses-permission android:name="android.permission.VIBRATE" />
 
     <application
         android:allowBackup="true"

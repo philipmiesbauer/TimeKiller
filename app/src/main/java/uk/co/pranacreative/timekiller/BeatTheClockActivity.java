@@ -1,10 +1,14 @@
 package uk.co.pranacreative.timekiller;
 
+import android.animation.ObjectAnimator;
+import android.animation.PropertyValuesHolder;
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Point;
 import android.os.Bundle;
+import android.os.Vibrator;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Display;
@@ -39,6 +43,7 @@ public class BeatTheClockActivity extends TimeKillerActivity {
     private long countBeatTheClock;
     private long highscoreBeatTheClock;
     private TextView tvTimeLeft;
+    private ObjectAnimator animPulseTimeLeft;
     private TextView tvHighScore;
     private TextView tvAddedTime;
     private long START_TIME_LEFT = 5000;
@@ -74,6 +79,7 @@ public class BeatTheClockActivity extends TimeKillerActivity {
         tvAddedTime.setText(String.format("+ %d ms", START_MILLIS_TO_ADD));
 
         // Set up the user interaction to manually show or hide the system UI.
+
         tvCount.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -128,11 +134,15 @@ public class BeatTheClockActivity extends TimeKillerActivity {
             }
         }
 
-        MenuItem menuItemClassic = findViewById(R.id.menu_modes_classic);
-        MenuItem menuItemBeatTheClock = findViewById(R.id.menu_modes_beat_the_clock);
+        MenuItem menuItemClassic = menu.findItem(R.id.menu_modes_classic);
+        MenuItem menuItemBeatTheClock = menu.findItem(R.id.menu_modes_beat_the_clock);
 
-        menuItemBeatTheClock.setVisible(false);
-        menuItemClassic.setVisible(true);
+        if (menuItemBeatTheClock != null) {
+            menuItemBeatTheClock.setVisible(false);
+        }
+        if (menuItemClassic != null) {
+            menuItemClassic.setVisible(true);
+        }
 
         mGoogleSignInAccount = GoogleSignIn.getLastSignedInAccount(this);
         updateSignInOutUI(mGoogleSignInAccount);
@@ -190,7 +200,7 @@ public class BeatTheClockActivity extends TimeKillerActivity {
 
         // Reset Text
         tvCount.setText(R.string.start);
-        updateTimeLeftView(START_TIME_LEFT);
+        tvCount.setClickable(true);
 
         tvCount.animate()
                 .translationY(tvCountY)
@@ -210,11 +220,57 @@ public class BeatTheClockActivity extends TimeKillerActivity {
 
             @Override
             public void onTimerFinish() {
-                resetScene();
+                stopTimer();
             }
         };
+
+        // Reset tvTimeLeft
+        tvTimeLeft.setClickable(false);
+        tvTimeLeft.setTextColor(getResources().getColor(R.color.colorBlack));
+        updateTimeLeftView(START_TIME_LEFT);
+        if (animPulseTimeLeft != null) {
+            animPulseTimeLeft.end();
+            animPulseTimeLeft.setDuration(300);
+
+            animPulseTimeLeft.setRepeatCount(1);
+            animPulseTimeLeft.setRepeatMode(ObjectAnimator.REVERSE);
+            animPulseTimeLeft.start();
+        }
+
         Log.d(TAG, "Reset Scene");
 
+    }
+
+    private void stopTimer() {
+        tvCount.setClickable(false);
+        vibratePhone(1000);
+
+        tvTimeLeft.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                resetScene();
+            }
+        });
+        tvTimeLeft.setTextColor(getResources().getColor(R.color.colorRed));
+        tvTimeLeft.setText(R.string.reset);
+
+        animPulseTimeLeft = ObjectAnimator.ofPropertyValuesHolder(tvTimeLeft,
+                PropertyValuesHolder.ofFloat("scaleX", 1.2f),
+                PropertyValuesHolder.ofFloat("scaleY", 1.2f));
+        animPulseTimeLeft.setDuration(300);
+
+        animPulseTimeLeft.setRepeatCount(ObjectAnimator.INFINITE);
+        animPulseTimeLeft.setRepeatMode(ObjectAnimator.REVERSE);
+
+        animPulseTimeLeft.start();
+    }
+
+    private void vibratePhone(long time) {
+        Vibrator v = (Vibrator) this.context.getSystemService(Context.VIBRATOR_SERVICE);
+        // Vibrate for 1 second
+        if (v != null) {
+            v.vibrate(time);
+        }
     }
 
     @SuppressLint("DefaultLocale")

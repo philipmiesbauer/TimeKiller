@@ -4,7 +4,7 @@
     <string name="leaderboard">Bestenliste</string>
     <string name="achievements">Ziele</string>
     <string name="note_no_google_sign_in">Du must dich zuerst in Google Play anmelden</string>
-    <string name="reset">Zähler zurücksetzen</string>
+    <string name="reset">Zurücksetzen</string>
     <string name="sign_in">Anmelden</string>
     <string name="sign_out">Ausloggen</string>
     <string name="signin_failure">Kann mich nicht anmelden</string>
