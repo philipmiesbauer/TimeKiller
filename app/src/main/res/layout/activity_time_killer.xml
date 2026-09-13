@@ -3,7 +3,6 @@
     android:id="@+id/rl_activity"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#0099cc"
     android:animateLayoutChanges="true"
     android:fitsSystemWindows="true"
     tools:context="uk.co.pranacreative.timekiller.TimeKillerActivity">
