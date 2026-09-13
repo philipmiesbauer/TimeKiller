@@ -8,8 +8,8 @@ android {
         applicationId "uk.co.pranacreative.timekiller"
         minSdk 21
         targetSdk 36
-        versionCode 38
-        versionName "2.0.0"
+        versionCode 39
+        versionName "2.0.1"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -18,8 +18,8 @@ android {
             if (System.getenv("KEYSTORE_PATH") != null) {
                 storeFile file(System.getenv("KEYSTORE_PATH"))
                 storePassword System.getenv("KEYSTORE_PASSWORD")
-                keyAlias System.getenv("KEY_ALIAS")
-                keyPassword System.getenv("KEY_PASSWORD")
+                keyAlias System.getenv("KEY_ALIAS") ?: "key0"
+                keyPassword System.getenv("KEY_PASSWORD") ?: System.getenv("KEYSTORE_PASSWORD")
             }
         }
     }
