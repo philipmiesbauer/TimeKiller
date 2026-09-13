@@ -48,6 +48,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
+    environment: production
 
     steps:
     - uses: actions/checkout@v4
@@ -67,7 +68,6 @@ jobs:
     - name: Decode Keystore
       run: |
         echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > app/release.jks
-        echo "Decoded Keystore size: $(wc -c < app/release.jks) bytes"
 
     - name: Build Release Bundle
       env:
@@ -75,9 +75,7 @@ jobs:
         KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
         KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
         KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-      run: |
-        echo "Building release bundle with KEY_ALIAS: '${KEY_ALIAS}'"
-        ./gradlew :app:bundleRelease
+      run: ./gradlew :app:bundleRelease
 
     - name: Upload to Google Play
       uses: r0adkll/upload-google-play@v1
