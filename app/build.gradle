@@ -8,8 +8,8 @@ android {
         applicationId "uk.co.pranacreative.timekiller"
         minSdk 21
         targetSdk 36
-        versionCode 41
-        versionName "2.0.1"
+        versionCode 42
+        versionName "2.0.2"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -52,7 +52,6 @@ dependencies {
     implementation 'androidx.mediarouter:mediarouter:1.7.0'
 
     implementation 'com.google.android.gms:play-services-base:18.5.0'
-    implementation 'com.google.android.gms:play-services-ads:23.6.0'
     implementation 'com.google.android.gms:play-services-auth:21.3.0'
     implementation 'com.google.android.gms:play-services-games-v2:20.1.2'
 
