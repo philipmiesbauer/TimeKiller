@@ -5,11 +5,10 @@
     android:layout_height="match_parent"
     android:background="#0099cc"
     android:animateLayoutChanges="true"
+    android:fitsSystemWindows="true"
     tools:context="uk.co.pranacreative.timekiller.TimeKillerActivity">
 
-    <!-- The primary full-screen view. This can be replaced with whatever view
-         is needed to present your content, e.g. VideoView, SurfaceView,
-         TextureView, etc. -->
+    <!-- The primary full-screen view. -->
 
     <TextView
         android:id="@+id/tv_count"
@@ -22,6 +21,5 @@
         android:textColor="#ffffff"
         android:textSize="50sp"
         android:textStyle="bold" />
-
 
 </RelativeLayout>

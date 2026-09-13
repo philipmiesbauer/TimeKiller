@@ -6,7 +6,6 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Point;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.VibrationEffect;
@@ -14,7 +13,6 @@ import android.os.Vibrator;
 import androidx.core.content.ContextCompat;
 import androidx.preference.PreferenceManager;
 import android.util.Log;
-import android.view.Display;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -312,14 +310,14 @@ public class BeatTheClockActivity extends TimeKillerActivity {
     }
 
     protected void relocateView(View view) {
-        Display display = getWindowManager().getDefaultDisplay();
-        Point size = new Point();
-        display.getSize(size);
-        int width = size.x;
-        int height = size.y - tvTimeLeft.getHeight();
+        int width = rlActivity.getWidth();
+        int topOffset = tvTimeLeft.getBottom();
+        int height = rlActivity.getHeight() - topOffset;
+
+        if (width <= 0 || height <= 0) return;
 
         float x = (float) (Math.random() * (width - view.getWidth()));
-        float y = (float) (Math.random() * (height - view.getHeight()) + tvTimeLeft.getHeight());
+        float y = (float) (Math.random() * (height - view.getHeight()) + topOffset);
 
         view.animate()
                 .translationXBy(x - view.getX())

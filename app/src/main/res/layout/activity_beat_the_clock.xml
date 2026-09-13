@@ -5,11 +5,10 @@
     android:layout_height="match_parent"
     android:background="#0099cc"
     android:animateLayoutChanges="true"
+    android:fitsSystemWindows="true"
     tools:context="uk.co.pranacreative.timekiller.BeatTheClockActivity">
 
-    <!-- The primary full-screen view. This can be replaced with whatever view
-         is needed to present your content, e.g. VideoView, SurfaceView,
-         TextureView, etc. -->
+    <!-- The primary full-screen view. -->
 
     <TextView
         android:id="@+id/tv_count"
@@ -22,7 +21,6 @@
         android:textColor="#ffffff"
         android:textSize="50sp"
         android:textStyle="bold" />
-
 
     <TextView
         android:id="@+id/tv_time_left"
@@ -42,6 +40,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:padding="5dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginTop="8dp"
         android:layout_alignParentEnd="true"
         android:layout_alignParentTop="true"
         android:text="@string/highscore" />

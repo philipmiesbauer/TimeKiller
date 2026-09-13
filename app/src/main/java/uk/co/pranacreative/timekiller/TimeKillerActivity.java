@@ -5,11 +5,9 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Point;
 import android.os.Bundle;
 import androidx.preference.PreferenceManager;
 import android.util.Log;
-import android.view.Display;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -208,11 +206,10 @@ public class TimeKillerActivity extends AppCompatActivity {
     }
 
     protected void relocateView(View view) {
-        Display display = getWindowManager().getDefaultDisplay();
-        Point size = new Point();
-        display.getSize(size);
-        int width = size.x;
-        int height = size.y;
+        int width = rlActivity.getWidth();
+        int height = rlActivity.getHeight();
+
+        if (width <= 0 || height <= 0) return;
 
         float x = (float) (Math.random() * (width - view.getWidth()));
         float y = (float) (Math.random() * (height - view.getHeight()));
