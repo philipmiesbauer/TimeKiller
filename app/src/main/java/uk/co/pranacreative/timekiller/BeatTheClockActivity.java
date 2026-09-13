@@ -7,9 +7,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Point;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.VibrationEffect;
 import android.os.Vibrator;
-import android.preference.PreferenceManager;
+import androidx.core.content.ContextCompat;
+import androidx.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Display;
 import android.view.Menu;
@@ -124,16 +127,6 @@ public class BeatTheClockActivity extends TimeKillerActivity {
         inflator.inflate(R.menu.menu_time_killer, menu);
         menuTimerKiller = menu;
 
-        // Check if Ads have been removed
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        if (prefs.getBoolean(getString(R.string.inapp_remove_ads_id), false)) {
-            // Ads have been removed
-            MenuItem removeAds = menu.findItem(R.id.menu_remove_ads);
-            if (removeAds != null) {
-                removeAds.setVisible(false);
-            }
-        }
-
         MenuItem menuItemClassic = menu.findItem(R.id.menu_modes_classic);
         MenuItem menuItemBeatTheClock = menu.findItem(R.id.menu_modes_beat_the_clock);
 
@@ -152,32 +145,31 @@ public class BeatTheClockActivity extends TimeKillerActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-
-        switch (item.getItemId()) {
-            case R.id.menu_modes_classic:
-                Intent startIntent = new Intent(context, TimeKillerActivity.class);
-                context.startActivity(startIntent);
-                return true;
-            case R.id.menu_leaderboard_beat_the_clock:
-                // Submit scores before checking the leaderboard
-                mGoogleSignInAccount = GoogleSignIn.getLastSignedInAccount(this);
-                if (mGoogleSignInAccount != null) {
-                    Games.getLeaderboardsClient(this, mGoogleSignInAccount)
-                            .submitScore(getString(R.string.leaderboard_all_time), count_all_time);
-                    Games.getLeaderboardsClient(this, mGoogleSignInAccount)
-                            .submitScore(getString(R.string.leaderboard_beat_the_clock), countBeatTheClock);
-                    Games.getLeaderboardsClient(this, mGoogleSignInAccount)
-                            .getLeaderboardIntent(getString(R.string.leaderboard_beat_the_clock))
-                            .addOnSuccessListener(new OnSuccessListener<Intent>() {
-                                @Override
-                                public void onSuccess(Intent intent) {
-                                    startActivityForResult(intent, REQUEST_LEADERBOARD);
-                                }
-                            });
-                } else {
-                    notifyNoGoogleSignIn();
-                }
-                return true;
+        int id = item.getItemId();
+        if (id == R.id.menu_modes_classic) {
+            Intent startIntent = new Intent(context, TimeKillerActivity.class);
+            context.startActivity(startIntent);
+            return true;
+        } else if (id == R.id.menu_leaderboard_beat_the_clock) {
+            // Submit scores before checking the leaderboard
+            mGoogleSignInAccount = GoogleSignIn.getLastSignedInAccount(this);
+            if (mGoogleSignInAccount != null) {
+                Games.getLeaderboardsClient(this, mGoogleSignInAccount)
+                        .submitScore(getString(R.string.leaderboard_all_time), count_all_time);
+                Games.getLeaderboardsClient(this, mGoogleSignInAccount)
+                        .submitScore(getString(R.string.leaderboard_beat_the_clock), countBeatTheClock);
+                Games.getLeaderboardsClient(this, mGoogleSignInAccount)
+                        .getLeaderboardIntent(getString(R.string.leaderboard_beat_the_clock))
+                        .addOnSuccessListener(new OnSuccessListener<Intent>() {
+                            @Override
+                            public void onSuccess(Intent intent) {
+                                startActivityForResult(intent, REQUEST_LEADERBOARD);
+                            }
+                        });
+            } else {
+                notifyNoGoogleSignIn();
+            }
+            return true;
         }
         return false;
     }
@@ -226,7 +218,7 @@ public class BeatTheClockActivity extends TimeKillerActivity {
 
         // Reset tvTimeLeft
         tvTimeLeft.setClickable(false);
-        tvTimeLeft.setTextColor(getResources().getColor(R.color.colorBlack));
+        tvTimeLeft.setTextColor(ContextCompat.getColor(this, R.color.colorBlack));
         updateTimeLeftView(START_TIME_LEFT);
         if (animPulseTimeLeft != null) {
             animPulseTimeLeft.end();
@@ -251,7 +243,7 @@ public class BeatTheClockActivity extends TimeKillerActivity {
                 resetScene();
             }
         });
-        tvTimeLeft.setTextColor(getResources().getColor(R.color.colorRed));
+        tvTimeLeft.setTextColor(ContextCompat.getColor(this, R.color.colorRed));
         tvTimeLeft.setText(R.string.reset);
 
         animPulseTimeLeft = ObjectAnimator.ofPropertyValuesHolder(tvTimeLeft,
@@ -269,7 +261,11 @@ public class BeatTheClockActivity extends TimeKillerActivity {
         Vibrator v = (Vibrator) this.context.getSystemService(Context.VIBRATOR_SERVICE);
         // Vibrate for 1 second
         if (v != null) {
-            v.vibrate(time);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                v.vibrate(VibrationEffect.createOneShot(time, VibrationEffect.DEFAULT_AMPLITUDE));
+            } else {
+                v.vibrate(time);
+            }
         }
     }
 
