@@ -26,7 +26,7 @@ import android.view.animation.ScaleAnimation;
 import android.widget.TextView;
 
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
-import com.google.android.gms.games.Games;
+import com.google.android.gms.games.PlayGames;
 import com.google.android.gms.tasks.OnSuccessListener;
 
 import uk.co.pranacreative.timekiller.utils.ExtendableCountDownTimer;
@@ -112,13 +112,10 @@ public class BeatTheClockActivity extends TimeKillerActivity {
     protected void onStop() {
         super.onStop();
 
-        mGoogleSignInAccount = GoogleSignIn.getLastSignedInAccount(this);
-        if (mGoogleSignInAccount != null) {
-            Games.getLeaderboardsClient(this, mGoogleSignInAccount)
-                    .submitScore(getString(R.string.leaderboard_all_time), count_all_time);
-            Games.getLeaderboardsClient(this, mGoogleSignInAccount)
-                    .submitScore(getString(R.string.leaderboard_beat_the_clock), countBeatTheClock);
-        }
+        PlayGames.getLeaderboardsClient(this)
+                .submitScore(getString(R.string.leaderboard_all_time), count_all_time);
+        PlayGames.getLeaderboardsClient(this)
+                .submitScore(getString(R.string.leaderboard_beat_the_clock), countBeatTheClock);
     }
 
     @Override
@@ -152,23 +149,18 @@ public class BeatTheClockActivity extends TimeKillerActivity {
             return true;
         } else if (id == R.id.menu_leaderboard_beat_the_clock) {
             // Submit scores before checking the leaderboard
-            mGoogleSignInAccount = GoogleSignIn.getLastSignedInAccount(this);
-            if (mGoogleSignInAccount != null) {
-                Games.getLeaderboardsClient(this, mGoogleSignInAccount)
-                        .submitScore(getString(R.string.leaderboard_all_time), count_all_time);
-                Games.getLeaderboardsClient(this, mGoogleSignInAccount)
-                        .submitScore(getString(R.string.leaderboard_beat_the_clock), countBeatTheClock);
-                Games.getLeaderboardsClient(this, mGoogleSignInAccount)
-                        .getLeaderboardIntent(getString(R.string.leaderboard_beat_the_clock))
-                        .addOnSuccessListener(new OnSuccessListener<Intent>() {
-                            @Override
-                            public void onSuccess(Intent intent) {
-                                startActivityForResult(intent, REQUEST_LEADERBOARD);
-                            }
-                        });
-            } else {
-                notifyNoGoogleSignIn();
-            }
+            PlayGames.getLeaderboardsClient(this)
+                    .submitScore(getString(R.string.leaderboard_all_time), count_all_time);
+            PlayGames.getLeaderboardsClient(this)
+                    .submitScore(getString(R.string.leaderboard_beat_the_clock), countBeatTheClock);
+            PlayGames.getLeaderboardsClient(this)
+                    .getLeaderboardIntent(getString(R.string.leaderboard_beat_the_clock))
+                    .addOnSuccessListener(new OnSuccessListener<Intent>() {
+                        @Override
+                        public void onSuccess(Intent intent) {
+                            startActivityForResult(intent, REQUEST_LEADERBOARD);
+                        }
+                    });
             return true;
         }
         return false;
@@ -177,13 +169,11 @@ public class BeatTheClockActivity extends TimeKillerActivity {
     private void resetScene() {
 
         // Submit scores before resetting
-        mGoogleSignInAccount = GoogleSignIn.getLastSignedInAccount(this);
-        if (mGoogleSignInAccount != null) {
-            Games.getLeaderboardsClient(this, mGoogleSignInAccount)
-                    .submitScore(getString(R.string.leaderboard_all_time), count_all_time);
-            Games.getLeaderboardsClient(this, mGoogleSignInAccount)
-                    .submitScore(getString(R.string.leaderboard_beat_the_clock), countBeatTheClock);
-        }
+        PlayGames.getLeaderboardsClient(this)
+                .submitScore(getString(R.string.leaderboard_all_time), count_all_time);
+        PlayGames.getLeaderboardsClient(this)
+                .submitScore(getString(R.string.leaderboard_beat_the_clock), countBeatTheClock);
+
         // Unlock achievements before resetting
         unlockCountAchievements();
 
@@ -351,43 +341,35 @@ public class BeatTheClockActivity extends TimeKillerActivity {
         super.unlockCountAchievements();
 
         // Beat the clock
-        mGoogleSignInAccount = GoogleSignIn.getLastSignedInAccount(this);
-        if (mGoogleSignInAccount != null) {
-            if (countBeatTheClock == 100) {
-                Games.getAchievementsClient(this, mGoogleSignInAccount)
-                        .unlock(getString(R.string.achievement_ftt_100_clicks_id));
-            } else if (countBeatTheClock == 1000) {
-                Games.getAchievementsClient(this, mGoogleSignInAccount)
-                        .unlock(getString(R.string.achievement_ftt_1000_clicks_id));
-            } else if (countBeatTheClock == 10000) {
-                Games.getAchievementsClient(this, mGoogleSignInAccount)
-                        .unlock(getString(R.string.achievement_ftt_10k_clicks_id));
-            }
+        if (countBeatTheClock == 100) {
+            PlayGames.getAchievementsClient(this)
+                    .unlock(getString(R.string.achievement_ftt_100_clicks_id));
+        } else if (countBeatTheClock == 1000) {
+            PlayGames.getAchievementsClient(this)
+                    .unlock(getString(R.string.achievement_ftt_1000_clicks_id));
+        } else if (countBeatTheClock == 10000) {
+            PlayGames.getAchievementsClient(this)
+                    .unlock(getString(R.string.achievement_ftt_10k_clicks_id));
         }
     }
 
     @Override
     protected void checkCountAchievements() {
         // Achievements from clicking
-
         super.checkCountAchievements();
 
         // Beat the clock
-
-        mGoogleSignInAccount = GoogleSignIn.getLastSignedInAccount(this);
-        if (mGoogleSignInAccount != null) {
-            if (countBeatTheClock >= 100) {
-                Games.getAchievementsClient(this, mGoogleSignInAccount)
-                        .unlock(getString(R.string.achievement_ftt_100_clicks_id));
-            }
-            if (countBeatTheClock >= 1000) {
-                Games.getAchievementsClient(this, mGoogleSignInAccount)
-                        .unlock(getString(R.string.achievement_ftt_1000_clicks_id));
-            }
-            if (countBeatTheClock >= 10000) {
-                Games.getAchievementsClient(this, mGoogleSignInAccount)
-                        .unlock(getString(R.string.achievement_ftt_10k_clicks_id));
-            }
+        if (countBeatTheClock >= 100) {
+            PlayGames.getAchievementsClient(this)
+                    .unlock(getString(R.string.achievement_ftt_100_clicks_id));
+        }
+        if (countBeatTheClock >= 1000) {
+            PlayGames.getAchievementsClient(this)
+                    .unlock(getString(R.string.achievement_ftt_1000_clicks_id));
+        }
+        if (countBeatTheClock >= 10000) {
+            PlayGames.getAchievementsClient(this)
+                    .unlock(getString(R.string.achievement_ftt_10k_clicks_id));
         }
     }
 }
