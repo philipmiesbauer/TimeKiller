@@ -66,11 +66,12 @@ jobs:
 
     - name: Decode Keystore
       run: |
-        echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > app/release.jks
+        echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > app/release.jks
+        echo "Decoded Keystore size: $(wc -c < app/release.jks) bytes"
 
     - name: Build Release Bundle
       env:
-        KEYSTORE_PATH: release.jks
+        KEYSTORE_PATH: ${{ github.workspace }}/app/release.jks
         KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
         KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
         KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
