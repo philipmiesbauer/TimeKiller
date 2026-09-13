@@ -5,6 +5,8 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.drawable.ColorDrawable;
+import android.os.Build;
 import android.os.Bundle;
 import androidx.preference.PreferenceManager;
 import android.util.Log;
@@ -16,19 +18,11 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.google.android.gms.auth.api.signin.GoogleSignIn;
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
-import com.google.android.gms.auth.api.signin.GoogleSignInClient;
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
-import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.games.PlayGames;
 import com.google.android.gms.games.PlayGamesSdk;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -52,12 +46,7 @@ public class TimeKillerActivity extends AppCompatActivity {
     protected static final int MATERIAL_COLOUR_WHITE = 0xFFFFFFFF;
     protected static final int MATERIAL_COLOUR_BLACK = 0xFF000000;
 
-    protected static final int RC_SIGN_IN = 9001;
-    private static final String TAG = TimeKillerActivity.class.getSimpleName();
-
-    // Google API
-    protected GoogleSignInClient mGoogleSignInClient;
-    protected GoogleSignInAccount mGoogleSignInAccount;
+    protected static final String TAG = TimeKillerActivity.class.getSimpleName();
 
     // Logic Variables
     protected long count_all_time;
@@ -96,6 +85,7 @@ public class TimeKillerActivity extends AppCompatActivity {
         });
 
         setUpEnvironment();
+        changeBackgroundColour();
 
         if (count_all_time > 0) {
             tvCount.setText(String.valueOf(count_all_time));
@@ -121,7 +111,7 @@ public class TimeKillerActivity extends AppCompatActivity {
         super.onStop();
 
         PlayGames.getLeaderboardsClient(this)
-                .submitScore(getString(R.string.leaderboard_all_time), count_all_time);
+                .submitScore(getString(R.string.leaderboard_all_time_leaderboard), count_all_time);
     }
 
     @Override
@@ -140,9 +130,6 @@ public class TimeKillerActivity extends AppCompatActivity {
             menuItemClassic.setVisible(false);
         }
 
-        mGoogleSignInAccount = GoogleSignIn.getLastSignedInAccount(this);
-        updateSignInOutUI(mGoogleSignInAccount);
-
         return true;
     }
 
@@ -154,45 +141,27 @@ public class TimeKillerActivity extends AppCompatActivity {
             Intent startIntent = new Intent(context, BeatTheClockActivity.class);
             context.startActivity(startIntent);
             return true;
-        } else if (id == R.id.menu_sign_in) {
-            signInClicked();
-            return true;
-        } else if (id == R.id.menu_sign_out) {
-            signOutclicked();
-            return true;
         } else if (id == R.id.menu_achievements) {
             PlayGames.getAchievementsClient(this)
                     .getAchievementsIntent()
-                    .addOnSuccessListener(new OnSuccessListener<Intent>() {
-                        @Override
-                        public void onSuccess(Intent intent) {
-                            startActivityForResult(intent, REQUEST_ACHIEVEMENTS);
-                        }
-                    });
+                    .addOnSuccessListener(intent -> startActivityForResult(intent, REQUEST_ACHIEVEMENTS))
+                    .addOnFailureListener(e -> Log.e(TAG, "Failed to launch achievements intent", e));
             return true;
         } else if (id == R.id.menu_leaderboard_all_time) {
             PlayGames.getLeaderboardsClient(this)
-                    .submitScore(getString(R.string.leaderboard_all_time), count_all_time);
+                    .submitScore(getString(R.string.leaderboard_all_time_leaderboard), count_all_time);
             PlayGames.getLeaderboardsClient(this)
-                    .getLeaderboardIntent(getString(R.string.leaderboard_all_time))
-                    .addOnSuccessListener(new OnSuccessListener<Intent>() {
-                        @Override
-                        public void onSuccess(Intent intent) {
-                            startActivityForResult(intent, REQUEST_LEADERBOARD);
-                        }
-                    });
+                    .getLeaderboardIntent(getString(R.string.leaderboard_all_time_leaderboard))
+                    .addOnSuccessListener(intent -> startActivityForResult(intent, REQUEST_LEADERBOARD))
+                    .addOnFailureListener(e -> Log.e(TAG, "Failed to launch all time leaderboard intent", e));
             return true;
         } else if (id == R.id.menu_leaderboard_beat_the_clock) {
             PlayGames.getLeaderboardsClient(this)
-                    .submitScore(getString(R.string.leaderboard_all_time), count_all_time);
+                    .submitScore(getString(R.string.leaderboard_all_time_leaderboard), count_all_time);
             PlayGames.getLeaderboardsClient(this)
-                    .getLeaderboardIntent(getString(R.string.leaderboard_beat_the_clock))
-                    .addOnSuccessListener(new OnSuccessListener<Intent>() {
-                        @Override
-                        public void onSuccess(Intent intent) {
-                            startActivityForResult(intent, REQUEST_LEADERBOARD);
-                        }
-                    });
+                    .getLeaderboardIntent(getString(R.string.leaderboard_faster_than_time))
+                    .addOnSuccessListener(intent -> startActivityForResult(intent, REQUEST_LEADERBOARD))
+                    .addOnFailureListener(e -> Log.e(TAG, "Failed to launch beat the clock leaderboard intent", e));
             return true;
         }
         return false;
@@ -237,7 +206,16 @@ public class TimeKillerActivity extends AppCompatActivity {
 
         tvCount.setTextColor(textColour);
         int index = (int) Math.round(Math.random() * (backgroundColours.length - 1));
-        rlActivity.setBackgroundColor(backgroundColours[index]);
+        int newColor = backgroundColours[index];
+        rlActivity.setBackgroundColor(newColor);
+
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setBackgroundDrawable(new ColorDrawable(newColor));
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            getWindow().setStatusBarColor(newColor);
+        }
     }
 
     protected void resetCurrentNumberTimer() {
@@ -263,75 +241,39 @@ public class TimeKillerActivity extends AppCompatActivity {
         toastNoGoogleSignIn.show();
     }
 
-    // Call when the sign-in button is clicked
-    protected void signInClicked() {
-        Intent signInIntent = mGoogleSignInClient.getSignInIntent();
-        startActivityForResult(signInIntent, RC_SIGN_IN);
-    }
-
-    // Call when the sign-out button is clicked
-    protected void signOutclicked() {
-
-        GoogleSignInClient signInClient = GoogleSignIn.getClient(this,
-                GoogleSignInOptions.DEFAULT_GAMES_SIGN_IN);
-        signInClient.signOut().addOnCompleteListener(this,
-                new OnCompleteListener<Void>() {
-                    @Override
-                    public void onComplete(@NonNull Task<Void> task) {
-                        updateSignInOutUI(null);
-                    }
-                });
-    }
-
     protected void unlockEnjoyAchievement() {
-        PlayGames.getAchievementsClient(this).unlock(getString(R.string.achievement_enjoy_view_id));
+        PlayGames.getAchievementsClient(this).unlock(getString(R.string.achievement_enjoy_the_view));
     }
 
     protected void unlockCountAchievements() {
         if (count_all_time == 100) {
-            PlayGames.getAchievementsClient(this).unlock(getString(R.string.achievement_100_clicks_id));
+            PlayGames.getAchievementsClient(this).unlock(getString(R.string.achievement_100_clicks));
         } else if (count_all_time == 1000) {
-            PlayGames.getAchievementsClient(this).unlock(getString(R.string.achievement_1000_clicks_id));
+            PlayGames.getAchievementsClient(this).unlock(getString(R.string.achievement_1000_clicks));
         } else if (count_all_time == 10000) {
-            PlayGames.getAchievementsClient(this).unlock(getString(R.string.achievement_10k_clicks_id));
+            PlayGames.getAchievementsClient(this).unlock(getString(R.string.achievement_10k_clicks));
         } else if (count_all_time == 100000) {
-            PlayGames.getAchievementsClient(this).unlock(getString(R.string.achievement_100k_clicks_id));
+            PlayGames.getAchievementsClient(this).unlock(getString(R.string.achievement_100k_clicks));
         } else if (count_all_time == 1000000) {
-            PlayGames.getAchievementsClient(this).unlock(getString(R.string.achievement_1m_clicks_id));
+            PlayGames.getAchievementsClient(this).unlock(getString(R.string.achievement_1_million_clicks));
         }
     }
 
     protected void checkCountAchievements() {
         if (count_all_time >= 100) {
-            PlayGames.getAchievementsClient(this).unlock(getString(R.string.achievement_100_clicks_id));
+            PlayGames.getAchievementsClient(this).unlock(getString(R.string.achievement_100_clicks));
         }
         if (count_all_time >= 1000) {
-            PlayGames.getAchievementsClient(this).unlock(getString(R.string.achievement_1000_clicks_id));
+            PlayGames.getAchievementsClient(this).unlock(getString(R.string.achievement_1000_clicks));
         }
         if (count_all_time >= 10000) {
-            PlayGames.getAchievementsClient(this).unlock(getString(R.string.achievement_10k_clicks_id));
+            PlayGames.getAchievementsClient(this).unlock(getString(R.string.achievement_10k_clicks));
         }
         if (count_all_time >= 100000) {
-            PlayGames.getAchievementsClient(this).unlock(getString(R.string.achievement_100k_clicks_id));
+            PlayGames.getAchievementsClient(this).unlock(getString(R.string.achievement_100k_clicks));
         }
         if (count_all_time >= 1000000) {
-            PlayGames.getAchievementsClient(this).unlock(getString(R.string.achievement_1m_clicks_id));
-        }
-    }
-
-    public void updateSignInOutUI(GoogleSignInAccount account) {
-        if (menuTimerKiller != null) {
-            MenuItem signIn = menuTimerKiller.findItem(R.id.menu_sign_in);
-            MenuItem signOut = menuTimerKiller.findItem(R.id.menu_sign_out);
-            if (signIn != null && signOut != null) {
-                if (account != null) {
-                    signIn.setVisible(false);
-                    signOut.setVisible(true);
-                } else {
-                    signIn.setVisible(true);
-                    signOut.setVisible(false);
-                }
-            }
+            PlayGames.getAchievementsClient(this).unlock(getString(R.string.achievement_1_million_clicks));
         }
     }
 
@@ -352,43 +294,5 @@ public class TimeKillerActivity extends AppCompatActivity {
             prefs.edit().putLong(COUNT_STR, count_all_time).apply();
         }
         count_all_time = prefs.getLong(COUNT_STR, -1);
-
-        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestIdToken(getString(R.string.google_games_web_client_id))
-                .requestEmail()
-                .build();
-
-        mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
-
-        mGoogleSignInClient.silentSignIn()
-                .addOnCompleteListener(this, new OnCompleteListener<GoogleSignInAccount>() {
-                    @Override
-                    public void onComplete(@NonNull Task<GoogleSignInAccount> task) {
-                        handleSignInResult(task);
-                    }
-                });
-
-        mGoogleSignInAccount = GoogleSignIn.getLastSignedInAccount(this);
-        updateSignInOutUI(mGoogleSignInAccount);
-    }
-
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
-        if (requestCode == RC_SIGN_IN) {
-            Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
-            handleSignInResult(task);
-        }
-    }
-
-    private void handleSignInResult(@NonNull Task<GoogleSignInAccount> completedTask) {
-        try {
-            mGoogleSignInAccount = completedTask.getResult(ApiException.class);
-            updateSignInOutUI(mGoogleSignInAccount);
-        } catch (ApiException e) {
-            Log.w(TAG, "handleSignInResult:error", e);
-            updateSignInOutUI(null);
-        }
     }
 }

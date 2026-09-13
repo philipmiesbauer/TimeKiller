@@ -1,22 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--Google Play game services IDs. Save this file as res/values/games-ids.xml in your project.-->
 <resources>
-
-    <string name="app_id" translatable="false" type="id">555129802179</string>
-
-    <string name="achievement_100_clicks_id" translatable="false">CgkIw5vCgpQQEAIQAg</string>
-    <string name="achievement_1000_clicks_id" translatable="false">CgkIw5vCgpQQEAIQBw</string>
-    <string name="achievement_10k_clicks_id" translatable="false">CgkIw5vCgpQQEAIQCA</string>
-    <string name="achievement_100k_clicks_id" translatable="false">CgkIw5vCgpQQEAIQCQ</string>
-    <string name="achievement_1m_clicks_id" translatable="false">CgkIw5vCgpQQEAIQCg</string>
-    <string name="achievement_enjoy_view_id" translatable="false">CgkIw5vCgpQQEAIQDA</string>
-    <string name="achievement_ftt_100_clicks_id" translatable="false">CgkIw5vCgpQQEAIQDg</string>
-    <string name="achievement_ftt_1000_clicks_id" translatable="false">CgkIw5vCgpQQEAIQDw</string>
-    <string name="achievement_ftt_10k_clicks_id" translatable="false">CgkIw5vCgpQQEAIQEA</string>
-
-    <string name="inapp_remove_ads_id" translatable="false">remove_ads</string>
-
-    <string name="leaderboard_all_time" translatable="false">CgkIw5vCgpQQEAIQAw</string>
-    <string name="leaderboard_beat_the_clock" translatable="false">CgkIw5vCgpQQEAIQDQ</string>
-
-    <string name="google_games_web_client_id" translatable="false">555129802179-3lt6a8b6qg26ntjhj183e9b7pk0duh7i.apps.googleusercontent.com</string>
+    <!--app_id-->
+    <string name="app_id" translatable="false">555129802179</string>
+    <!--package_name-->
+    <string name="package_name" translatable="false">uk.co.pranacreative.timekiller</string>
+    <!--achievement 100 clicks-->
+    <string name="achievement_100_clicks" translatable="false">CgkIw5vCgpQQEAIQAg</string>
+    <!--achievement 1000 clicks-->
+    <string name="achievement_1000_clicks" translatable="false">CgkIw5vCgpQQEAIQBw</string>
+    <!--achievement 10k clicks-->
+    <string name="achievement_10k_clicks" translatable="false">CgkIw5vCgpQQEAIQCA</string>
+    <!--achievement 100k clicks-->
+    <string name="achievement_100k_clicks" translatable="false">CgkIw5vCgpQQEAIQCQ</string>
+    <!--achievement 1 Million clicks-->
+    <string name="achievement_1_million_clicks" translatable="false">CgkIw5vCgpQQEAIQCg</string>
+    <!--achievement Enjoy the view-->
+    <string name="achievement_enjoy_the_view" translatable="false">CgkIw5vCgpQQEAIQDA</string>
+    <!--achievement FTT 100 clicks-->
+    <string name="achievement_ftt_100_clicks" translatable="false">CgkIw5vCgpQQEAIQDg</string>
+    <!--achievement FTT 1000 clicks-->
+    <string name="achievement_ftt_1000_clicks" translatable="false">CgkIw5vCgpQQEAIQDw</string>
+    <!--achievement FTT 10k clicks-->
+    <string name="achievement_ftt_10k_clicks" translatable="false">CgkIw5vCgpQQEAIQEA</string>
+    <!--leaderboard All time leaderboard-->
+    <string name="leaderboard_all_time_leaderboard" translatable="false">CgkIw5vCgpQQEAIQAw</string>
+    <!--leaderboard Faster than Time-->
+    <string name="leaderboard_faster_than_time" translatable="false">CgkIw5vCgpQQEAIQDQ</string>
 </resources>

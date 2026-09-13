@@ -23,16 +23,13 @@ import android.view.animation.AnimationSet;
 import android.view.animation.ScaleAnimation;
 import android.widget.TextView;
 
-import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.games.PlayGames;
-import com.google.android.gms.tasks.OnSuccessListener;
 
 import uk.co.pranacreative.timekiller.utils.ExtendableCountDownTimer;
 
 
 /**
- * An example full-screen activity that shows and hides the system UI (i.e.
- * status bar and navigation/system bar) with user interaction.
+ * Beat The Clock game mode activity.
  */
 public class BeatTheClockActivity extends TimeKillerActivity {
 
@@ -77,12 +74,9 @@ public class BeatTheClockActivity extends TimeKillerActivity {
 
         tvAddedTime.setText(String.format("+ %d ms", START_MILLIS_TO_ADD));
 
-        // Set up the user interaction to manually show or hide the system UI.
-
         tvCount.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                // Start timer if not running
                 if (countBeatTheClock == 0) {
                     timerTimeLeft.start();
                 } else {
@@ -101,6 +95,7 @@ public class BeatTheClockActivity extends TimeKillerActivity {
         resetScene();
 
         setUpEnvironment();
+        changeBackgroundColour();
     }
 
     @Override
@@ -108,9 +103,9 @@ public class BeatTheClockActivity extends TimeKillerActivity {
         super.onStop();
 
         PlayGames.getLeaderboardsClient(this)
-                .submitScore(getString(R.string.leaderboard_all_time), count_all_time);
+                .submitScore(getString(R.string.leaderboard_all_time_leaderboard), count_all_time);
         PlayGames.getLeaderboardsClient(this)
-                .submitScore(getString(R.string.leaderboard_beat_the_clock), countBeatTheClock);
+                .submitScore(getString(R.string.leaderboard_faster_than_time), countBeatTheClock);
     }
 
     @Override
@@ -129,9 +124,6 @@ public class BeatTheClockActivity extends TimeKillerActivity {
             menuItemClassic.setVisible(true);
         }
 
-        mGoogleSignInAccount = GoogleSignIn.getLastSignedInAccount(this);
-        updateSignInOutUI(mGoogleSignInAccount);
-
         return true;
     }
 
@@ -143,39 +135,30 @@ public class BeatTheClockActivity extends TimeKillerActivity {
             context.startActivity(startIntent);
             return true;
         } else if (id == R.id.menu_leaderboard_beat_the_clock) {
-            // Submit scores before checking the leaderboard
             PlayGames.getLeaderboardsClient(this)
-                    .submitScore(getString(R.string.leaderboard_all_time), count_all_time);
+                    .submitScore(getString(R.string.leaderboard_all_time_leaderboard), count_all_time);
             PlayGames.getLeaderboardsClient(this)
-                    .submitScore(getString(R.string.leaderboard_beat_the_clock), countBeatTheClock);
+                    .submitScore(getString(R.string.leaderboard_faster_than_time), countBeatTheClock);
             PlayGames.getLeaderboardsClient(this)
-                    .getLeaderboardIntent(getString(R.string.leaderboard_beat_the_clock))
-                    .addOnSuccessListener(new OnSuccessListener<Intent>() {
-                        @Override
-                        public void onSuccess(Intent intent) {
-                            startActivityForResult(intent, REQUEST_LEADERBOARD);
-                        }
-                    });
+                    .getLeaderboardIntent(getString(R.string.leaderboard_faster_than_time))
+                    .addOnSuccessListener(intent -> startActivityForResult(intent, REQUEST_LEADERBOARD))
+                    .addOnFailureListener(e -> Log.e(TAG, "Failed to launch beat the clock leaderboard", e));
             return true;
         }
-        return false;
+        return super.onOptionsItemSelected(item);
     }
 
     private void resetScene() {
 
-        // Submit scores before resetting
         PlayGames.getLeaderboardsClient(this)
-                .submitScore(getString(R.string.leaderboard_all_time), count_all_time);
+                .submitScore(getString(R.string.leaderboard_all_time_leaderboard), count_all_time);
         PlayGames.getLeaderboardsClient(this)
-                .submitScore(getString(R.string.leaderboard_beat_the_clock), countBeatTheClock);
+                .submitScore(getString(R.string.leaderboard_faster_than_time), countBeatTheClock);
 
-        // Unlock achievements before resetting
         unlockCountAchievements();
 
-        // Reset Beat the Clock count_all_time to 0
         countBeatTheClock = 0;
 
-        // Reset Text
         tvCount.setText(R.string.start);
         tvCount.setClickable(true);
 
@@ -185,9 +168,6 @@ public class BeatTheClockActivity extends TimeKillerActivity {
                 .setDuration(1000)
                 .start();
 
-        /*  Set up timer to run for default time and update every 239ms
-            239 ms will make sure the millis second units change every time, making it look like
-            it is updating every millisecond.*/
         timerTimeLeft = new ExtendableCountDownTimer(START_TIME_LEFT, 239) {
             @Override
             public void onTimerTick(long l) {
@@ -201,7 +181,6 @@ public class BeatTheClockActivity extends TimeKillerActivity {
             }
         };
 
-        // Reset tvTimeLeft
         tvTimeLeft.setClickable(false);
         tvTimeLeft.setTextColor(ContextCompat.getColor(this, R.color.colorBlack));
         updateTimeLeftView(START_TIME_LEFT);
@@ -244,7 +223,6 @@ public class BeatTheClockActivity extends TimeKillerActivity {
 
     private void vibratePhone(long time) {
         Vibrator v = (Vibrator) this.context.getSystemService(Context.VIBRATOR_SERVICE);
-        // Vibrate for 1 second
         if (v != null) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 v.vibrate(VibrationEffect.createOneShot(time, VibrationEffect.DEFAULT_AMPLITUDE));
@@ -264,12 +242,10 @@ public class BeatTheClockActivity extends TimeKillerActivity {
         millis = millisLeft % 1000;
 
         if (secs >= 60) {
-            // At least 1 minute left
             mins = secs / 60;
             secs = secs % 60;
             tvTimeLeft.setText(String.format("%02d:%02d.%03d secs", mins, secs, millis));
         } else {
-            // Less than 1 minutes left
             tvTimeLeft.setText(String.format("%02d.%03d secs", secs, millis));
         }
         Log.d(TAG, "Updated time");
@@ -287,12 +263,11 @@ public class BeatTheClockActivity extends TimeKillerActivity {
     }
 
     private void addTime() {
-        // Always change same amount of time
         timerTimeLeft.addMillis(START_MILLIS_TO_ADD);
 
         AnimationSet as = new AnimationSet(true);
         as.setInterpolator(new AccelerateDecelerateInterpolator());
-        // Show
+
         ScaleAnimation scaleAnimation = new ScaleAnimation(1, 2, 1, 2);
         scaleAnimation.setDuration(START_MILLIS_TO_ADD / 2);
         as.addAnimation(scaleAnimation);
@@ -327,39 +302,35 @@ public class BeatTheClockActivity extends TimeKillerActivity {
     }
 
     protected void unlockCountAchievements() {
-        // Achievements from clicking
         super.unlockCountAchievements();
 
-        // Beat the clock
         if (countBeatTheClock == 100) {
             PlayGames.getAchievementsClient(this)
-                    .unlock(getString(R.string.achievement_ftt_100_clicks_id));
+                    .unlock(getString(R.string.achievement_ftt_100_clicks));
         } else if (countBeatTheClock == 1000) {
             PlayGames.getAchievementsClient(this)
-                    .unlock(getString(R.string.achievement_ftt_1000_clicks_id));
+                    .unlock(getString(R.string.achievement_ftt_1000_clicks));
         } else if (countBeatTheClock == 10000) {
             PlayGames.getAchievementsClient(this)
-                    .unlock(getString(R.string.achievement_ftt_10k_clicks_id));
+                    .unlock(getString(R.string.achievement_ftt_10k_clicks));
         }
     }
 
     @Override
     protected void checkCountAchievements() {
-        // Achievements from clicking
         super.checkCountAchievements();
 
-        // Beat the clock
         if (countBeatTheClock >= 100) {
             PlayGames.getAchievementsClient(this)
-                    .unlock(getString(R.string.achievement_ftt_100_clicks_id));
+                    .unlock(getString(R.string.achievement_ftt_100_clicks));
         }
         if (countBeatTheClock >= 1000) {
             PlayGames.getAchievementsClient(this)
-                    .unlock(getString(R.string.achievement_ftt_1000_clicks_id));
+                    .unlock(getString(R.string.achievement_ftt_1000_clicks));
         }
         if (countBeatTheClock >= 10000) {
             PlayGames.getAchievementsClient(this)
-                    .unlock(getString(R.string.achievement_ftt_10k_clicks_id));
+                    .unlock(getString(R.string.achievement_ftt_10k_clicks));
         }
     }
 }

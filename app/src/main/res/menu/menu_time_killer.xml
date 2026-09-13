@@ -43,12 +43,4 @@
                 app:showAsAction="never" />
         </menu>
     </item>
-    <item
-        android:id="@+id/menu_sign_in"
-        android:title="@string/sign_in"
-        app:showAsAction="never" />
-    <item
-        android:id="@+id/menu_sign_out"
-        android:title="@string/sign_out"
-        app:showAsAction="never" />
 </menu>
