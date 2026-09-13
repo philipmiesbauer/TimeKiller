@@ -29,14 +29,14 @@ jobs:
       if: github.event_name == 'pull_request'
       run: |
         # Get current version code
-        CURRENT_VERSION=$(grep "versionCode" app/build.gradle | awk '{print $2}')
+        CURRENT_VERSION=$(grep "versionCode" app/build.gradle | tr -d '\r' | awk '{print $2}')
         echo "Current versionCode: $CURRENT_VERSION"
         
         # Get version code from target branch
-        TARGET_VERSION=$(git show origin/${{ github.base_ref }}:app/build.gradle | grep "versionCode" | awk '{print $2}')
+        TARGET_VERSION=$(git show origin/${{ github.base_ref }}:app/build.gradle | grep "versionCode" | tr -d '\r' | awk '{print $2}')
         echo "Target branch (${{ github.base_ref }}) versionCode: $TARGET_VERSION"
         
-        if [ "$CURRENT_VERSION" -le "$TARGET_VERSION" ]; then
+        if [ -n "$TARGET_VERSION" ] && [ "$CURRENT_VERSION" -le "$TARGET_VERSION" ]; then
           echo "Error: versionCode must be incremented. Current: $CURRENT_VERSION, Target: $TARGET_VERSION"
           exit 1
         fi
