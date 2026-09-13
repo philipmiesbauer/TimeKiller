@@ -7,3 +7,13 @@
 /build
 /captures
 .externalNativeBuild
+
+# Keystores & release certificates
+*.jks
+*.keystore
+time_killer_release.jks
+release.jks
+
+# Secret & config files
+*.json
+google-services.json
