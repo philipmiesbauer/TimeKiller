@@ -8,7 +8,7 @@ android {
         applicationId "uk.co.pranacreative.timekiller"
         minSdk 21
         targetSdk 36
-        versionCode 39
+        versionCode 40
         versionName "2.0.1"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
