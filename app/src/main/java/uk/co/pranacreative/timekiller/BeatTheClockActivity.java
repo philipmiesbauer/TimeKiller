@@ -64,8 +64,6 @@ public class BeatTheClockActivity extends TimeKillerActivity {
 
         context = this;
         activity = this;
-
-        mVisible = true;
         tvCount = findViewById(R.id.tv_count);
         rlActivity = findViewById(R.id.rl_activity);
         tvTimeLeft = findViewById(R.id.tv_time_left);
@@ -92,7 +90,6 @@ public class BeatTheClockActivity extends TimeKillerActivity {
                 } else {
                     addTime();
                 }
-                hide();
                 countUp();
                 relocateView(view);
                 changeBackgroundColour();
@@ -320,11 +317,6 @@ public class BeatTheClockActivity extends TimeKillerActivity {
         display.getSize(size);
         int width = size.x;
         int height = size.y - tvTimeLeft.getHeight();
-
-        // Make sure number doesn't land under an ad
-        if (mAdView != null) {
-            height -= mAdView.getHeight();
-        }
 
         float x = (float) (Math.random() * (width - view.getWidth()));
         float y = (float) (Math.random() * (height - view.getHeight()) + tvTimeLeft.getHeight());
